@@ -5,6 +5,8 @@ import { and, lte, gte, desc, eq } from "drizzle-orm";
 import { SignupForm } from "@/components/signup-form";
 import { StampBadge } from "@/components/stamp-badge";
 
+export const dynamic = "force-dynamic";
+
 export default async function HomePage() {
   const now = new Date();
   const openDay = await db.query.days.findFirst({
