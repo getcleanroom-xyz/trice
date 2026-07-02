@@ -1,7 +1,7 @@
 [build]
-builder = "docker"
+builder = "DOCKERFILE"
 
 [deploy]
 healthcheckPath = "/"
 healthcheckTimeout = 30
-restartPolicyType = "always"
+restartPolicyType = "ALWAYS"
