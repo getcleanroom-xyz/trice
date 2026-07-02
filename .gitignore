@@ -1,0 +1,28 @@
+# secrets
+.env.local
+.env
+.env.production
+*.pem
+
+# dependencies
+node_modules/
+
+# build outputs
+.next/
+dist/
+*.tsbuildinfo
+drizzle/
+
+# docker volumes
+trice_postgres_data/
+trice_redis_data/
+trice_web_node_modules/
+trice_service_node_modules/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

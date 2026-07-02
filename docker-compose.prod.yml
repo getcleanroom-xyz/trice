@@ -1,0 +1,82 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: trice
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?err}
+      POSTGRES_DB: trice
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trice"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build: ./apps/web
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      DATABASE_URL: postgres://trice:${DB_PASSWORD:?err}@postgres:5432/trice
+      NEXT_PUBLIC_SERVICE_URL: ${SERVICE_URL:?err}
+      WEB_URL: ${WEB_URL:?err}
+      RESEND_API_KEY: ${RESEND_API_KEY:?err}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:?err}
+      ADMIN_SESSION_SECRET: ${ADMIN_SESSION_SECRET:?err}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  service:
+    build: ./apps/service
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      DATABASE_URL: postgres://trice:${DB_PASSWORD:?err}@postgres:5432/trice
+      REDIS_URL: redis://redis:6379
+      WEB_URL: ${WEB_URL:?err}
+      SERVICE_URL: ${SERVICE_URL:?err}
+      RESEND_API_KEY: ${RESEND_API_KEY:?err}
+      FLUTTERWAVE_SECRET_KEY: ${FLUTTERWAVE_SECRET_KEY:-}
+      FLUTTERWAVE_WEBHOOK_SECRET: ${FLUTTERWAVE_WEBHOOK_SECRET:-}
+      NOWPAYMENTS_API_KEY: ${NOWPAYMENTS_API_KEY:-}
+      NOWPAYMENTS_IPN_SECRET: ${NOWPAYMENTS_IPN_SECRET:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build: ./apps/service
+    restart: unless-stopped
+    command: bun run src/workers/email-worker.ts
+    environment:
+      DATABASE_URL: postgres://trice:${DB_PASSWORD:?err}@postgres:5432/trice
+      REDIS_URL: redis://redis:6379
+      WEB_URL: ${WEB_URL:?err}
+      RESEND_API_KEY: ${RESEND_API_KEY:?err}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:

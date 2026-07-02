@@ -1,0 +1,35 @@
+{
+  "name": "@trice/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "next": "16.2.10",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "drizzle-orm": "0.45.2",
+    "drizzle-kit": "0.31.10",
+    "postgres": "3.4.9",
+    "zod": "4.4.3",
+    "resend": "6.16.0",
+    "lucide-react": "1.23.0",
+    "react-grid-layout": "2.2.3",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "tailwind-merge": "3.6.0"
+  },
+  "devDependencies": {
+    "typescript": "5.9.2",
+    "@types/node": "22.14.0",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
+    "tailwindcss": "4.3.2",
+    "@tailwindcss/postcss": "4.3.2"
+  }
+}
