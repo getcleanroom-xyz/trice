@@ -20,34 +20,34 @@ export const dailyDropCron = new Elysia()
       pattern: "0 7 * * 1-5", // 07:00 WAT, weekdays — adjust for your audience
       timezone: "Africa/Lagos",
       async run() {
-        const now = new Date();
-        const openDay = (
-          await db
+        try {
+          const now = new Date();
+          const openDay = (
+            await db
+              .select()
+              .from(days)
+              .where(and(lte(days.publishAt, now), gte(days.expiresAt, now)))
+              .limit(1)
+          )[0];
+          if (!openDay) return;
+
+          const activeSubscribers = await db
             .select()
-            .from(days)
-            .where(and(lte(days.publishAt, now), gte(days.expiresAt, now)))
-            .limit(1)
-        )[0];
-        if (!openDay) return;
+            .from(subscribers)
+            .where(isNull(subscribers.unsubscribedAt));
 
-        const activeSubscribers = await db
-          .select()
-          .from(subscribers)
-          .where(isNull(subscribers.unsubscribedAt));
+          if (activeSubscribers.length === 0) return;
 
-        if (activeSubscribers.length === 0) return;
-
-        // TODO at meaningful scale: batch this insert (drizzle supports
-        // multi-row `.values([...])`) instead of one row at a time, and
-        // move the fan-out itself into a BullMQ "flow" so a crash mid-run
-        // is resumable instead of restarting from zero.
-        for (const subscriber of activeSubscribers) {
-          await db.insert(emailSends).values({
-            subscriberId: subscriber.id,
-            dayId: openDay.id,
-            kind: "daily_drop",
-            status: "queued",
-          });
+          for (const subscriber of activeSubscribers) {
+            await db.insert(emailSends).values({
+              subscriberId: subscriber.id,
+              dayId: openDay.id,
+              kind: "daily_drop",
+              status: "queued",
+            });
+          }
+        } catch (err) {
+          console.error("daily-drop cron failed:", err);
         }
       },
     }),
@@ -57,23 +57,27 @@ export const dailyDropCron = new Elysia()
       name: "poll-queued-emails",
       pattern: "*/30 * * * * *",
       async run() {
-        const queued = await db
-          .select()
-          .from(emailSends)
-          .where(eq(emailSends.status, "queued"))
-          .limit(500);
+        try {
+          const queued = await db
+            .select()
+            .from(emailSends)
+            .where(eq(emailSends.status, "queued"))
+            .limit(500);
 
-        for (const row of queued) {
-          await emailQueue.add(
-            "send",
-            {
-              emailSendId: row.id,
-              kind: row.kind as "confirmation" | "daily_drop",
-              subscriberId: row.subscriberId,
-              dayId: row.dayId ?? undefined,
-            },
-            { jobId: row.id, attempts: 5, backoff: { type: "exponential", delay: 5000 } },
-          );
+          for (const row of queued) {
+            await emailQueue.add(
+              "send",
+              {
+                emailSendId: row.id,
+                kind: row.kind as "confirmation" | "daily_drop",
+                subscriberId: row.subscriberId,
+                dayId: row.dayId ?? undefined,
+              },
+              { jobId: row.id, attempts: 5, backoff: { type: "exponential", delay: 5000 } },
+            );
+          }
+        } catch (err) {
+          console.error("poll-queued-emails cron failed:", err);
         }
       },
     }),
