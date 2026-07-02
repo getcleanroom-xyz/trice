@@ -1,12 +1,7 @@
-import { drizzle } from "drizzle-orm/postgres-js";
+import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { pgTable, uuid, text, timestamp, integer } from "drizzle-orm/pg-core";
 
-// This is a deliberately narrow, service-owned view of the shared schema —
-// only the columns the queue worker and payment routes actually touch.
-// TODO: once the schema stabilizes, extract apps/web/lib/db/schema.ts into
-// a `packages/db` workspace package and import the real tables from both
-// apps instead of hand-mirroring them here.
 export const subscribers = pgTable("subscribers", {
   id: uuid("id").primaryKey().defaultRandom(),
   email: text("email").notNull(),
@@ -48,5 +43,18 @@ export const magicLinks = pgTable("magic_links", {
   usedAt: timestamp("used_at", { withTimezone: true }),
 });
 
-const client = postgres(process.env.DATABASE_URL!, { prepare: false });
-export const db = drizzle(client);
+let _db: PostgresJsDatabase | null = null;
+
+function getDb(): PostgresJsDatabase {
+  if (_db) return _db;
+  const url = process.env.DATABASE_URL;
+  if (!url) throw new Error("DATABASE_URL is not set");
+  _db = drizzle(postgres(url, { prepare: false }));
+  return _db;
+}
+
+export const db = new Proxy({} as PostgresJsDatabase, {
+  get(_, prop) {
+    return (getDb() as Record<string, unknown>)[prop as string];
+  },
+});
