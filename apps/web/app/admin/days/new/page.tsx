@@ -1,6 +1,8 @@
 import { listTopics } from "@/app/admin/content-actions";
 import { DayForm } from "@/components/admin/day-form";
 
+export const dynamic = "force-dynamic";
+
 export default async function NewDayPage() {
   const topics = await listTopics();
   return (
