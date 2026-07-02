@@ -8,7 +8,7 @@ Fifteen minutes, spent well. One concept a day, delivered by email, filed away i
 apps/
   web/       Next.js 16 (App Router, Turbopack) + Tailwind v4
              - public site, daily content pages, signup, sign-in
-             - owns the database schema (Drizzle) — runs drizzle-kit push on startup
+             - owns the database schema (Drizzle + Postgres)
              - server actions: signup, magic-link, quiz grading, admin CRUD
 
   service/   Bun + Elysia
@@ -17,39 +17,31 @@ apps/
              - retryable email worker (separate process)
 ```
 
-## Deploy (Railway)
+Both apps share the same Postgres database via `DATABASE_URL`. Only `web` owns the schema.
 
-### 1. Set up Neon (Postgres)
+## First Deploy
 
-Create a Neon project → copy the connection string. Run the schema push from your machine:
+### 1. Schema push (one-time)
 
 ```bash
 cd apps/web
 cp .env.example .env.local
 # set DATABASE_URL to your Neon connection string
 npm install
-npx drizzle-kit push
+npx drizzle-kit push        # creates all tables
 ```
 
-### 2. Set up Upstash (Redis)
+### 2. Deploy to Railway
 
-Create an Upstash Redis database → copy the `REDIS_URL`.
+Connect the repo from [railway.com/new](https://railway.com/new). Create 3 services in a single project (manually add services from the canvas, don't use "Deploy from GitHub"):
 
-### 3. Deploy to Railway
+| Service  | Root Dir       | Config File                        | Needs domain? |
+|----------|---------------|------------------------------------|---------------|
+| web      | `/apps/web`    | (default)                          | Yes           |
+| service  | `/apps/service`| (default)                          | Yes           |
+| worker   | `/apps/service`| `/apps/service/railway.worker.toml`| No            |
 
-Connect your GitHub repo from the [Railway dashboard](https://railway.com/new).
-
-Railway auto-detects the Dockerfiles. Create three services:
-
-| Service  | Root Directory   | Config File                        | Needs public URL? |
-|----------|-----------------|------------------------------------|--------------------|
-| web      | `apps/web`       | `apps/web/railway.toml`            | Yes (port 3000)    |
-| service  | `apps/service`   | `apps/service/railway.toml`        | Yes (port 4000)    |
-| worker   | `apps/service`   | `apps/service/railway.worker.toml` | No                 |
-
-### 4. Add env vars
-
-For each service in the Railway dashboard, add the required env vars:
+### 3. Env vars per service
 
 | Variable                  | web | service | worker |
 |--------------------------|-----|---------|--------|
@@ -57,39 +49,30 @@ For each service in the Railway dashboard, add the required env vars:
 | `REDIS_URL`              |     | ✓       | ✓      |
 | `WEB_URL`                | ✓   | ✓       | ✓      |
 | `NEXT_PUBLIC_SERVICE_URL`| ✓   |         |        |
+| `SERVICE_URL`            |     | ✓       |        |
 | `RESEND_API_KEY`         | ✓   | ✓       | ✓      |
 | `ADMIN_EMAIL`            | ✓   |         |        |
 | `ADMIN_SESSION_SECRET`   | ✓   |         |        |
 
-### 5. Set up domain
+`NEXT_PUBLIC_SERVICE_URL` and `SERVICE_URL` should both be the Railway-generated domain for the service (e.g. `https://trice-service-production.up.railway.app`).
 
-Point `trice.getcleanroom.xyz` to the Railway web service's generated domain.
+Tip: set `DATABASE_URL`, `REDIS_URL`, `RESEND_API_KEY`, and `WEB_URL` as Railway Shared Variables so all services inherit them.
 
-## Dev (Docker)
+### 4. Domain
+
+Point `trice.getcleanroom.xyz` CNAME to the web service's Railway domain. Add the custom domain in Railway's service settings → Networking.
+
+## Dev (Docker Compose)
 
 ```bash
 docker compose up -d
 ```
 
-Brings up web, service, worker, postgres, and redis. Open http://localhost:3000. Admin at /admin.
+Brings up everything with local Postgres and Redis. Open http://localhost:3000.
 
 ## Dev (bare metal)
 
 ```bash
-# web
-cd apps/web && cp .env.example .env.local && npm install && npm run dev
-
-# service
-cd apps/service && cp .env.example .env && bun install && bun run dev
-
-# worker (separate terminal)
-cd apps/service && bun run worker
+cd apps/web && npm install && npm run dev
+cd apps/service && bun install && bun run dev    # + bun run worker in another terminal
 ```
-
-Requires Postgres 16+ and Redis 7+ running locally.
-
-## Env templates
-
-- `.env.production.example` — all production vars
-- `apps/web/.env.example` — web-specific
-- `apps/service/.env.example` — service-specific (shared by service + worker)
