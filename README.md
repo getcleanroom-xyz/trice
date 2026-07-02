@@ -4,98 +4,77 @@ Fifteen minutes, spent well. One concept a day, delivered by email, filed away i
 
 ## Architecture
 
-This is a two-app monorepo:
-
 ```
 trice/
   apps/
-    web/        Next.js 16 (App Router, Turbopack, React 19 canary) + shadcn/ui + Tailwind v4
-                 - the public site, the daily content pages, signup, sign-in
-                 - owns the database (Drizzle + Postgres) and almost all business logic
-                 - server actions handle signup, magic-link requests, quiz grading
-    service/    Bun + Elysia
-                 - a small, focused service that does two things Next.js server actions
-                   are the wrong shape for:
-                   1. queuing + sending the daily drop email to every subscriber, on a
-                      cron schedule, via BullMQ + Redis workers (retryable, observable,
-                      won't block a request/response cycle)
-                   2. generating payment links for tips (NGN via Flutterwave, crypto via
-                      NOWPayments) without ever holding funds or a wallet key itself
+    web/       Next.js 16 (App Router, Turbopack) + shadcn/ui + Tailwind v4
+               - public site, daily content pages, signup, sign-in
+               - owns the database (Drizzle + Postgres)
+               - server actions: signup, magic-link, quiz grading, admin CRUD
+
+    service/   Bun + Elysia
+               - cron-scheduled daily email drops via BullMQ + Redis + Resend
+               - payment link generation (Flutterwave + NOWPayments, non-custodial)
+               - retryable email worker in a separate process
 ```
 
-Why split it this way: Next.js server actions are great for anything triggered by a user
-in a request, but a "send 4,000 emails at 7am WAT, retry the failures, don't block
-anything" job wants a real queue and a long-running worker process, which App Router
-deployments (serverless-first) are not built for. Elysia on Bun is a tiny, fast surface
-for exactly that, plus the two payment webhook endpoints.
+Both apps share the same Postgres database. Only `web` runs schema migrations (drizzle-kit push). `service` reads/writes its own subset of tables.
 
-Both apps read from the same Postgres database (`DATABASE_URL`), but only `web` runs
-migrations. `service` only reads subscriber/content rows it needs and writes
-`payment` / `email_send` rows back.
+## Quick Start (Docker)
 
-## Getting the pieces running
+```bash
+cp .env.production.example .env.production
+# fill in DB_PASSWORD, RESEND_API_KEY, ADMIN_*, etc.
 
-### Prerequisites
-- Node.js 22+ (for `web`)
-- Bun 1.2+ (for `service`) — install from https://bun.sh
-- Postgres 16+
-- Redis 7+ (queue backing store for BullMQ)
-
-### 1. Database
-```
-cd apps/web
-cp .env.example .env.local   # fill in DATABASE_URL, RESEND_API_KEY, etc.
-npm install
-npx drizzle-kit push
-npm run dev
+docker compose up -d
 ```
 
-### 2. Queue + payments service
+Open http://localhost:3000. Admin at /admin (sign in with ADMIN_EMAIL).
+
+## Production Deploy
+
+### Railway
+
+```bash
+railway up --env-file .env.production -f docker-compose.prod.yml
 ```
-cd apps/service
-cp .env.example .env
-bun install
-bun run dev
+
+Then point `trice.getcleanroom.xyz` DNS to the Railway web service.
+
+### Manual (VPS)
+
+```bash
+cp .env.production.example .env.production
+# fill in all values
+
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d
 ```
 
-## What's implemented vs stubbed
+Schema is pushed automatically on web container startup (via entrypoint.sh).
 
-Implemented as real, working code:
-- Full Drizzle schema (subscribers, topics, days, quiz questions/attempts, magic links,
-  layout preferences, payments)
-- Signup + magic-link request server actions, with expiring tokens
-- Daily content page shell wired to the schema (video, note card, tabs, closing-page quiz)
-- Elysia service: cron trigger, BullMQ queue + worker for the daily drop, Flutterwave and
-  NOWPayments link-generation endpoints with webhook verification
+## Dev
 
-## What's implemented
+```bash
+# each app starts with its dev Docker compose
+docker compose up web service worker -d
+```
 
-Everything from the original scaffold, plus the three pieces that were
-previously stubbed:
+Or run bare-metal:
 
-- **Draggable/resizable layout** — `apps/web/components/day-layout.tsx`
-  wraps the video, notes, tabs, and quiz panels in `react-grid-layout`.
-  Position/size autosave (debounced ~600ms) to `layout_preferences`, keyed
-  by an anonymous device-token cookie minted in `proxy.ts` on first visit
-  to `/day/*` — same device, any browser, no login involved.
-- **Admin content authoring** — a password-free admin area at `/admin`,
-  gated by a magic link sent only to `ADMIN_EMAIL` (see
-  `app/admin/actions.ts`, `app/admin/verify/route.ts`, and the session
-  cookie logic in `lib/admin/session.ts`, enforced in `proxy.ts`). The
-  authoring form at `/admin/days/new` covers title, video URL, intro,
-  objectives, summary, your notes, publish time, grace-period hours, and a
-  dynamic quiz builder (multiple choice + one optional hand-graded task),
-  published atomically in a single DB transaction.
-- **Live FX for crypto tips** — `apps/service/src/fx.ts` fetches a live
-  NGN→USD rate from fawazahmed0's currency-api (free, keyless, covers NGN —
-  Frankfurter doesn't, since it only carries the ~30 currencies the ECB
-  itself publishes), with a documented CDN fallback and a 1-hour cache.
+```bash
+# web
+cd apps/web && cp .env.example .env.local && npm install && npm run dev
 
-## Still worth knowing about before shipping
+# service + worker
+cd apps/service && cp .env.example .env && bun install && bun run dev
+# worker (separate terminal)
+cd apps/service && bun run worker
+```
 
-- **Admin auth email volume** — the admin login email sends directly via
-  Resend from the web app (not queued), which is intentional for a
-  single-user, low-frequency flow, but worth knowing if you ever add more
-  admins.
-- Nothing here has been run (no bun in the sandbox this was built in) — do
-  an install + smoke test pass before trusting it in production.
+Requires Postgres 16+ and Redis 7+ running locally.
+
+## Environment Variables
+
+See `.env.production.example` for production. Per-app templates at:
+- `apps/web/.env.example`
+- `apps/service/.env.example`
