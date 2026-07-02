@@ -1,0 +1,6 @@
+FROM oven/bun:1 AS runner
+WORKDIR /app
+COPY package.json bun.lockb* tsconfig.json ./
+RUN bun install --frozen-lockfile
+COPY . .
+CMD ["bun", "run", "src/workers/email-worker.ts"]
