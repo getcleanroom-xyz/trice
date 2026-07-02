@@ -15,7 +15,7 @@ export function SignupForm() {
       <p className="font-serif text-lg text-foreground">
         {state.alreadySubscribed
           ? "Already on the roll — a new link arrives each morning."
-          : "You&rsquo;re on the roll — check your inbox."}
+          : "You're on the roll — check your inbox."}
       </p>
     );
   }
