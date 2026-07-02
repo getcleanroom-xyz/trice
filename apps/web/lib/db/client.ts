@@ -8,13 +8,15 @@ function getDb(): PostgresJsDatabase<typeof schema> {
   if (_db) return _db;
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error("DATABASE_URL is not set");
-  const client = postgres(url, { prepare: false });
-  _db = drizzle(client, { schema });
+  _db = drizzle(postgres(url, { prepare: false }), { schema });
   return _db;
 }
 
 export const db = new Proxy({} as PostgresJsDatabase<typeof schema>, {
-  get(_, prop) {
-    return (getDb() as unknown as Record<string, unknown>)[prop as string];
+  get(_target, prop) {
+    const target = getDb();
+    const value = (target as Record<string | symbol, unknown>)[prop];
+    if (typeof value === "function") return value.bind(target);
+    return value;
   },
 });

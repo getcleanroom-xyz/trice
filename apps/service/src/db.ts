@@ -54,7 +54,10 @@ function getDb(): PostgresJsDatabase {
 }
 
 export const db = new Proxy({} as PostgresJsDatabase, {
-  get(_, prop) {
-    return (getDb() as unknown as Record<string, unknown>)[prop as string];
+  get(_target, prop) {
+    const target = getDb();
+    const value = (target as Record<string | symbol, unknown>)[prop];
+    if (typeof value === "function") return value.bind(target);
+    return value;
   },
 });
