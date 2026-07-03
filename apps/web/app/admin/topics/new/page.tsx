@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { createTopic, type CreateTopicState } from "@/app/admin/topic-actions";
 import { Input } from "@/components/ui/input";
@@ -14,7 +15,11 @@ export default function NewTopicPage() {
 
   return (
     <main className="mx-auto max-w-lg px-6 py-12">
-      <span className="mb-8 block font-serif text-lg italic">Trice / admin</span>
+      <span className="mb-8 block font-serif text-lg italic">
+        <Link href="/" className="hover:text-primary">Trice</Link>{" "}
+        / <Link href="/admin" className="hover:text-primary">admin</Link>{" "}
+        / new topic
+      </span>
       <h1 className="mb-6 font-serif text-2xl text-foreground">New topic</h1>
 
       <form action={formAction} className="flex flex-col gap-4">

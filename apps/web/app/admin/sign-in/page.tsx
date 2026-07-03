@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { requestAdminLink, type AdminAuthState } from "@/app/admin/actions";
 import { Input } from "@/components/ui/input";
@@ -12,7 +13,9 @@ export default function AdminSignInPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col items-center justify-center px-6 text-center">
-      <span className="mb-10 font-serif text-lg italic">Trice / admin</span>
+      <span className="mb-10 font-serif text-lg italic">
+        <Link href="/" className="hover:text-primary">Trice</Link> / admin
+      </span>
 
       {state.ok ? (
         <p className="font-serif text-lg text-foreground">

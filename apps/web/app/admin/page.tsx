@@ -11,7 +11,10 @@ export default async function AdminPage() {
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
       <div className="mb-10 flex items-center justify-between">
-        <span className="font-serif text-lg italic">Trice / admin</span>
+        <span className="font-serif text-lg italic">
+          <Link href="/" className="hover:text-primary">Trice</Link>{" "}
+          / <Link href="/admin" className="hover:text-primary">admin</Link>
+        </span>
         <div className="flex gap-3">
           <Link href="/admin/topics/new" className={buttonVariants({ variant: "secondary" })}>
             New topic

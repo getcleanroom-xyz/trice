@@ -32,7 +32,6 @@ const steps = [
 export default function HowItWorksPage() {
   return (
     <main className="mx-auto max-w-2xl px-6 py-14">
-      <span className="mb-11 block font-serif text-lg italic">Trice</span>
       <h1 className="mb-1 font-serif text-3xl text-foreground">
         How the fifteen minutes work
       </h1>
@@ -53,7 +52,7 @@ export default function HowItWorksPage() {
       ))}
 
       <Link href="/" className={buttonVariants({ className: "mt-9" })}>
-        Join the roll
+        Back home
       </Link>
     </main>
   );

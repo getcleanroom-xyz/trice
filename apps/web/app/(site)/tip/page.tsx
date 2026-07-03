@@ -30,7 +30,6 @@ export default function TipPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-6 text-center">
-      <span className="mb-10 font-serif text-lg italic">Trice</span>
       <h1 className="mb-2 font-serif text-2xl text-foreground">
         Buy tomorrow's card a coffee
       </h1>

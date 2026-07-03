@@ -12,7 +12,6 @@ export default function SignInPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-6 text-center">
-      <span className="mb-11 font-serif text-lg italic">Trice</span>
 
       {state.ok ? (
         <p className="font-serif text-xl text-foreground">

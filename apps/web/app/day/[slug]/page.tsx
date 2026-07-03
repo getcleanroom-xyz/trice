@@ -35,7 +35,6 @@ export default async function DayPage({
   return (
     <main className="mx-auto max-w-4xl px-6 py-10">
       <div className="mb-2 flex items-center justify-between">
-        <span className="font-serif text-lg italic">Trice</span>
         <StampBadge expiresAt={day.expiresAt} />
       </div>
       <p className="mb-6 font-mono text-[11px] text-muted-foreground">
