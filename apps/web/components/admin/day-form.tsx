@@ -68,8 +68,10 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
     formState: { errors },
   } = form;
 
-  const objectivesArray = useFieldArray<FormValues>({ control, name: "objectives" as const });
-  const questionsArray = useFieldArray<FormValues>({ control, name: "questions" as const });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ctrl = control as any;
+  const objectivesArray = useFieldArray({ control: ctrl, name: "objectives" });
+  const questionsArray = useFieldArray({ control: ctrl, name: "questions" });
 
   function onSubmit(values: FormValues) {
     setServerError(null);
