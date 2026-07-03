@@ -57,16 +57,20 @@ export async function requestAdminLink(
     expiresAt: new Date(Date.now() + 15 * 60 * 1000),
   });
 
-  await sendViaResend({
-    from: "Trice <hello@emails.getcleanroom.xyz>",
-    to: parsed.data.email,
-    subject: "Your admin link",
-    html: `<div style="background:#16130E;color:#E8DFC8;font-family:sans-serif;padding:32px;">
+  try {
+    await sendViaResend({
+      from: "Trice <hello@emails.getcleanroom.xyz>",
+      to: parsed.data.email,
+      subject: "Your admin link",
+      html: `<div style="background:#16130E;color:#E8DFC8;font-family:sans-serif;padding:32px;">
       <p style="font-family:Georgia,serif;font-style:italic;font-size:18px;margin-bottom:24px;">Trice</p>
       <p style="margin-bottom:20px;">One link, good for fifteen minutes.</p>
       <a href="${process.env.WEB_URL}/admin/verify?token=${token}" style="display:inline-block;border:1px solid #B98A46;color:#ECE0C8;font-family:monospace;font-size:12px;padding:10px 20px;border-radius:2px;text-decoration:none;">Enter the admin</a>
     </div>`,
-  });
+    });
+  } catch {
+    return { ok: false, error: "Couldn't send the email — try again in a moment." };
+  }
 
   return { ok: true };
 }

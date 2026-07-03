@@ -31,9 +31,14 @@ const daySchema = z.object({
 export type CreateDayInput = z.infer<typeof daySchema>;
 
 export async function createDay(input: CreateDayInput) {
-  const parsed = daySchema.parse(input);
-  const publishAt = new Date(parsed.publishAt);
-  const expiresAt = new Date(publishAt.getTime() + parsed.graceHours * 60 * 60 * 1000);
+  const parsed = daySchema.safeParse(input);
+  if (!parsed.success) {
+    const fields = parsed.error.issues.map((i) => i.path.join(".")).join(", ");
+    throw new Error(`Invalid fields: ${fields}`);
+  }
+
+  const publishAt = new Date(parsed.data.publishAt);
+  const expiresAt = new Date(publishAt.getTime() + parsed.data.graceHours * 60 * 60 * 1000);
 
   // A day and its quiz are one unit of publishing — if the quiz insert
   // fails, the day shouldn't exist half-published.
@@ -41,22 +46,22 @@ export async function createDay(input: CreateDayInput) {
     const [day] = await tx
       .insert(days)
       .values({
-        topicId: parsed.topicId,
-        dayNumber: parsed.dayNumber,
-        slug: parsed.slug,
-        title: parsed.title,
-        videoUrl: parsed.videoUrl,
-        intro: parsed.intro,
-        objectives: parsed.objectives,
-        summary: parsed.summary,
-        notes: parsed.notes,
+        topicId: parsed.data.topicId,
+        dayNumber: parsed.data.dayNumber,
+        slug: parsed.data.slug,
+        title: parsed.data.title,
+        videoUrl: parsed.data.videoUrl,
+        intro: parsed.data.intro,
+        objectives: parsed.data.objectives,
+        summary: parsed.data.summary,
+        notes: parsed.data.notes,
         publishAt,
         expiresAt,
       })
       .returning();
 
     await tx.insert(quizQuestions).values(
-      parsed.questions.map((q, i) => ({
+      parsed.data.questions.map((q, i) => ({
         dayId: day.id,
         sortOrder: i,
         prompt: q.prompt,
@@ -65,8 +70,8 @@ export async function createDay(input: CreateDayInput) {
       })),
     );
 
-    if (parsed.task) {
-      await tx.insert(quizTasks).values({ dayId: day.id, prompt: parsed.task });
+    if (parsed.data.task) {
+      await tx.insert(quizTasks).values({ dayId: day.id, prompt: parsed.data.task });
     }
 
     return day.id;

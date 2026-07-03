@@ -246,7 +246,19 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
       {error && <p className="text-xs text-destructive">{error}</p>}
 
       <Button
-        disabled={pending || !topicId || !slug || !title || !videoUrl || !publishAt}
+        disabled={
+          pending ||
+          !topicId ||
+          !slug ||
+          !title ||
+          !videoUrl ||
+          !intro ||
+          objectives.filter(Boolean).length === 0 ||
+          !summary ||
+          !notes ||
+          !publishAt ||
+          questions.filter((q) => q.prompt && q.choices.filter(Boolean).length >= 2).length === 0
+        }
         onClick={submit}
         className={cn("self-start")}
       >

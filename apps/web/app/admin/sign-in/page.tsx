@@ -16,7 +16,7 @@ export default function AdminSignInPage() {
 
       {state.ok ? (
         <p className="font-serif text-lg text-foreground">
-          If that&rsquo;s the admin address, a link just went out. It&rsquo;s good for
+          If that's the admin address, a link just went out. It's good for
           fifteen minutes.
         </p>
       ) : (
