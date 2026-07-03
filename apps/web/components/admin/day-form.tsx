@@ -82,8 +82,8 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
     formState: { errors },
   } = form;
 
-  const objectivesArray = useFieldArray<FormValues>({ control, name: "objectives" });
-  const questionsArray = useFieldArray<FormValues>({ control, name: "questions" });
+  const objectivesArray = useFieldArray<FormValues, "objectives">({ control, name: "objectives" });
+  const questionsArray = useFieldArray<FormValues, "questions">({ control, name: "questions" });
 
   function onSubmit(values: FormValues) {
     setServerError(null);
