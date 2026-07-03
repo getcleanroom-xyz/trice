@@ -28,3 +28,18 @@ export async function createTopic(
   await db.insert(topics).values(parsed.data);
   redirect("/admin");
 }
+
+export async function createTopicDirect(formData: FormData) {
+  const raw = {
+    title: formData.get("title"),
+    description: formData.get("description"),
+    sortOrder: Number(formData.get("sortOrder")),
+  };
+  const parsed = topicSchema.safeParse(raw);
+  if (!parsed.success) {
+    redirect("/admin/topics/new?error=invalid");
+  }
+
+  await db.insert(topics).values(parsed.data);
+  redirect("/admin");
+}
