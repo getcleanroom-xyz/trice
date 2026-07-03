@@ -27,7 +27,7 @@ const formSchema = z.object({
   title: z.string().min(1),
   videoUrl: z.string().url(),
   intro: z.string().min(1),
-  objectives: z.array(z.string().min(1)).min(1),
+  objectives: z.array(z.object({ value: z.string().min(1) })).min(1),
   summary: z.string().min(1),
   notes: z.string().min(1),
   publishAt: z.string().min(1),
@@ -43,7 +43,7 @@ interface FormValues {
   title: string;
   videoUrl: string;
   intro: string;
-  objectives: string[];
+  objectives: { value: string }[];
   summary: string;
   notes: string;
   publishAt: string;
@@ -65,7 +65,7 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
       title: "",
       videoUrl: "",
       intro: "",
-      objectives: [""],
+      objectives: [{ value: "" }],
       summary: "",
       notes: "",
       publishAt: "",
@@ -89,7 +89,7 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
     setServerError(null);
     startTransition(async () => {
       try {
-        await createDay(values);
+        await createDay({ ...values, objectives: values.objectives.map((o) => o.value) });
       } catch (e) {
         if (e && typeof e === "object" && "digest" in e && String(e.digest).startsWith("NEXT_REDIRECT")) {
           throw e;
@@ -149,7 +149,7 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
         <Label>objectives</Label>
         {objectivesArray.fields.map((field, i) => (
           <div key={field.id} className="flex gap-2">
-            <Input {...register(`objectives.${i}`)} />
+            <Input {...register(`objectives.${i}.value`)} />
             <button
               type="button"
               onClick={() => objectivesArray.remove(i)}
@@ -165,7 +165,7 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
         )}
         <button
           type="button"
-          onClick={() => objectivesArray.append("")}
+          onClick={() => objectivesArray.append({ value: "" })}
           className="flex items-center gap-1 self-start font-mono text-[11px] text-primary"
         >
           <Plus className="h-3 w-3" /> add objective
