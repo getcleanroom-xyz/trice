@@ -36,7 +36,21 @@ const formSchema = z.object({
   task: z.string().optional(),
 });
 
-type FormValues = z.infer<typeof formSchema>;
+interface FormValues {
+  topicId: string;
+  dayNumber: number;
+  slug: string;
+  title: string;
+  videoUrl: string;
+  intro: string;
+  objectives: string[];
+  summary: string;
+  notes: string;
+  publishAt: string;
+  graceHours: number;
+  questions: { prompt: string; choices: string[]; correctIndex: number }[];
+  task?: string;
+}
 
 export function DayForm({ topics }: { topics: { id: string; title: string }[] }) {
   const [serverError, setServerError] = useState<string | null>(null);
@@ -68,10 +82,8 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
     formState: { errors },
   } = form;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const ctrl = control as any;
-  const objectivesArray = useFieldArray({ control: ctrl, name: "objectives" });
-  const questionsArray = useFieldArray({ control: ctrl, name: "questions" });
+  const objectivesArray = useFieldArray<FormValues>({ control, name: "objectives" });
+  const questionsArray = useFieldArray<FormValues>({ control, name: "questions" });
 
   function onSubmit(values: FormValues) {
     setServerError(null);
