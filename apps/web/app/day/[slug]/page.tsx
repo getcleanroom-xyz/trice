@@ -1,4 +1,5 @@
 import { notFound, redirect } from "next/navigation";
+import Link from "next/link";
 import { db } from "@/lib/db/client";
 import { days, quizQuestions } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -35,6 +36,7 @@ export default async function DayPage({
   return (
     <main className="mx-auto max-w-4xl px-6 py-10">
       <div className="mb-2 flex items-center justify-between">
+        <Link href="/" className="font-serif text-lg italic text-foreground hover:text-primary">Trice</Link>
         <StampBadge expiresAt={day.expiresAt} />
       </div>
       <p className="mb-6 font-mono text-[11px] text-muted-foreground">

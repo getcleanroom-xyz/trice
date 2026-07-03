@@ -19,7 +19,8 @@ export default async function HomePage() {
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-14">
-      <nav className="mb-16 flex items-center justify-end">
+      <nav className="mb-16 flex items-center justify-between">
+        <Link href="/" className="font-serif text-xl italic">Trice</Link>
         <div className="flex gap-6 font-mono text-[11px] text-muted-foreground">
           <Link href="/how-it-works">how it works</Link>
           <Link href="/sign-in">sign in</Link>

@@ -32,6 +32,7 @@ const steps = [
 export default function HowItWorksPage() {
   return (
     <main className="mx-auto max-w-2xl px-6 py-14">
+      <Link href="/" className="mb-11 block font-serif text-lg italic text-foreground hover:text-primary">Trice</Link>
       <h1 className="mb-1 font-serif text-3xl text-foreground">
         How the fifteen minutes work
       </h1>

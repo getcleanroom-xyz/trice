@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import Link from "next/link";
 import { requestLink, type RequestLinkState } from "@/app/actions/request-link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ export default function SignInPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-6 text-center">
+      <Link href="/" className="mb-11 font-serif text-lg italic text-foreground hover:text-primary">Trice</Link>
 
       {state.ok ? (
         <p className="font-serif text-xl text-foreground">
