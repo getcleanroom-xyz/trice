@@ -32,10 +32,10 @@ export default function TipPage() {
     <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-6 text-center">
       <span className="mb-10 font-serif text-lg italic">Trice</span>
       <h1 className="mb-2 font-serif text-2xl text-foreground">
-        Buy tomorrow&rsquo;s card a coffee
+        Buy tomorrow's card a coffee
       </h1>
       <p className="mb-7 max-w-xs text-[13px] leading-relaxed text-muted-foreground">
-        Trice stays free, no paywall, ever. If a day&rsquo;s card was worth more than
+        Trice stays free, no paywall, ever. If a day's card was worth more than
         fifteen minutes, this is where that goes.
       </p>
 

@@ -41,7 +41,7 @@ export default async function HomePage() {
       {openDay && topic && (
         <section className="mt-16 border-t border-border pt-8">
           <p className="mb-1 font-mono text-[11px] text-primary">
-            this week&rsquo;s chapter
+            this week's chapter
           </p>
           <h2 className="mb-7 font-serif text-2xl text-foreground">{topic.title}</h2>
           <div className="flex gap-7">
