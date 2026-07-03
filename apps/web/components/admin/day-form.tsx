@@ -24,15 +24,15 @@ const formSchema = z.object({
   topicId: z.string().uuid(),
   dayNumber: z.number().int().min(1),
   slug: z.string().min(1).regex(/^[a-z0-9-]+$/, "lowercase letters, numbers, hyphens only"),
-  title: z.string().min(1),
-  videoUrl: z.string().url(),
-  intro: z.string().min(1),
+  title: z.string().min(1, "Enter a title"),
+  videoUrl: z.string().url("Enter a valid URL"),
+  intro: z.string().min(1, "Write an intro"),
   objectives: z.array(z.object({ value: z.string().min(1) })).min(1),
-  summary: z.string().min(1),
-  notes: z.string().min(1),
-  publishAt: z.string().min(1),
+  summary: z.string().min(1, "Write a summary"),
+  notes: z.string().min(1, "Write your notes"),
+  publishAt: z.string().min(1, "Pick a publish date"),
   graceHours: z.number().min(1).max(72),
-  questions: z.array(questionSchema).min(1),
+  questions: z.array(questionSchema).min(1, "Add at least one question"),
   task: z.string().optional(),
 });
 
@@ -73,6 +73,7 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
       questions: [{ prompt: "", choices: ["", ""], correctIndex: 0 }],
       task: "",
     },
+    shouldFocusError: false,
   });
 
   const {
@@ -114,10 +115,16 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
     });
   }
 
-  const fieldErrorClass = "text-xs text-destructive";
+  const fieldErrorClass = "text-sm text-destructive mt-0.5";
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
+      {(Object.keys(errors).length > 0 || serverError) && (
+        <div className="rounded-sm border border-destructive/50 bg-destructive/10 px-4 py-3 font-mono text-sm text-destructive">
+          {serverError ?? "Fix the errors below before publishing."}
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="topicId">topic</Label>
