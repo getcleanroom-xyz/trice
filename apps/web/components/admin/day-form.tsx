@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { X, Plus } from "lucide-react";
@@ -9,7 +9,7 @@ import { createDay } from "@/app/admin/content-actions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Select } from "@/components/ui/select";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Radio } from "@/components/ui/radio";
 import { cn } from "@/lib/utils";
@@ -106,11 +106,22 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="topicId">topic</Label>
-          <Select {...register("topicId")}>
-            {topics.map((t) => (
-              <option key={t.id} value={t.id}>{t.title}</option>
-            ))}
-          </Select>
+          <Controller
+            control={control}
+            name="topicId"
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a topic" />
+                </SelectTrigger>
+                <SelectContent>
+                  {topics.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>{t.title}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
           {errors.topicId && <p className={fieldErrorClass}>{errors.topicId.message}</p>}
         </div>
 
