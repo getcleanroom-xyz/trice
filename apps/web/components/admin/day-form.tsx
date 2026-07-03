@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Radio } from "@/components/ui/radio";
+import { RadioInput } from "@/components/ui/radio";
 import { cn } from "@/lib/utils";
 
 const questionSchema = z.object({
@@ -79,8 +79,23 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
     register,
     control,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = form;
+
+  const watchedTitle = watch("title");
+  const watchedSlug = watch("slug");
+
+  useEffect(() => {
+    if (!watchedSlug && watchedTitle) {
+      const generated = watchedTitle
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+      setValue("slug", generated);
+    }
+  }, [watchedTitle, watchedSlug, setValue]);
 
   const objectivesArray = useFieldArray<FormValues, "objectives">({ control, name: "objectives" });
   const questionsArray = useFieldArray<FormValues, "questions">({ control, name: "questions" });
@@ -233,7 +248,7 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
             )}
             {field.choices.map((_, ci) => (
               <div key={ci} className="mb-1.5 flex items-center gap-2">
-                <Radio
+                <RadioInput
                   {...register(`questions.${qi}.correctIndex`, { valueAsNumber: true })}
                   value={ci}
                   defaultChecked={field.correctIndex === ci}
