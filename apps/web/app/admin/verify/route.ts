@@ -6,7 +6,7 @@ import { createAdminSessionCookie, ADMIN_COOKIE_NAME } from "@/lib/admin/session
 
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get("token");
-  const base = req.nextUrl.origin;
+  const base = process.env.WEB_URL ?? req.nextUrl.origin;
   if (!token) return NextResponse.redirect(new URL("/admin/sign-in", base));
 
   const row = await db.query.adminLoginTokens.findFirst({
