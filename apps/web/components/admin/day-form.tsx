@@ -1,135 +1,143 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useForm, useFieldArray } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { X, Plus } from "lucide-react";
-import { createDay, type CreateDayInput } from "@/app/admin/content-actions";
+import { createDay } from "@/app/admin/content-actions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Select } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
-type Question = { prompt: string; choices: string[]; correctIndex: number };
+const questionSchema = z.object({
+  prompt: z.string().min(1),
+  choices: z.array(z.string().min(1)).min(2),
+  correctIndex: z.number().int().min(0),
+});
 
-const textareaClass =
-  "rounded-sm border border-input bg-transparent px-3.5 py-2 text-sm text-foreground";
-const labelClass = "font-mono text-[10px] text-muted-foreground";
+const formSchema = z.object({
+  topicId: z.string().uuid(),
+  dayNumber: z.number().int().min(1),
+  slug: z.string().min(1).regex(/^[a-z0-9-]+$/, "lowercase letters, numbers, hyphens only"),
+  title: z.string().min(1),
+  videoUrl: z.string().url(),
+  intro: z.string().min(1),
+  objectives: z.array(z.string().min(1)).min(1),
+  summary: z.string().min(1),
+  notes: z.string().min(1),
+  publishAt: z.string().min(1),
+  graceHours: z.number().min(1).max(72),
+  questions: z.array(questionSchema).min(1),
+  task: z.string().optional(),
+});
+
+type FormValues = z.infer<typeof formSchema>;
 
 export function DayForm({ topics }: { topics: { id: string; title: string }[] }) {
-  const [topicId, setTopicId] = useState(topics[0]?.id ?? "");
-  const [dayNumber, setDayNumber] = useState(1);
-  const [slug, setSlug] = useState("");
-  const [title, setTitle] = useState("");
-  const [videoUrl, setVideoUrl] = useState("");
-  const [intro, setIntro] = useState("");
-  const [objectives, setObjectives] = useState<string[]>([""]);
-  const [summary, setSummary] = useState("");
-  const [notes, setNotes] = useState("");
-  const [publishAt, setPublishAt] = useState("");
-  const [graceHours, setGraceHours] = useState(24);
-  const [task, setTask] = useState("");
-  const [questions, setQuestions] = useState<Question[]>([
-    { prompt: "", choices: ["", ""], correctIndex: 0 },
-  ]);
-  const [error, setError] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  function updateQuestion(i: number, patch: Partial<Question>) {
-    setQuestions((qs) => qs.map((q, idx) => (idx === i ? { ...q, ...patch } : q)));
-  }
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      topicId: topics[0]?.id ?? "",
+      dayNumber: 1,
+      slug: "",
+      title: "",
+      videoUrl: "",
+      intro: "",
+      objectives: [""],
+      summary: "",
+      notes: "",
+      publishAt: "",
+      graceHours: 24,
+      questions: [{ prompt: "", choices: ["", ""], correctIndex: 0 }],
+      task: "",
+    },
+  });
 
-  function submit() {
-    setError(null);
-    const input: CreateDayInput = {
-      topicId,
-      dayNumber,
-      slug,
-      title,
-      videoUrl,
-      intro,
-      objectives: objectives.filter(Boolean),
-      summary,
-      notes,
-      publishAt: new Date(publishAt).toISOString(),
-      graceHours,
-      questions: questions
-        .filter((q) => q.prompt && q.choices.filter(Boolean).length >= 2)
-        .map((q) => ({ ...q, choices: q.choices.filter(Boolean) })),
-      task: task || undefined,
-    };
+  const {
+    register,
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = form;
+
+  const objectivesArray = useFieldArray({ control, name: "objectives" });
+  const questionsArray = useFieldArray({ control, name: "questions" });
+
+  function onSubmit(values: FormValues) {
+    setServerError(null);
     startTransition(async () => {
       try {
-        await createDay(input);
+        await createDay(values);
       } catch (e) {
-        // `redirect()` inside the server action throws a special Next.js
-        // control-flow error (digest starts with NEXT_REDIRECT) that must
-        // propagate, not be swallowed as a form error.
         if (e && typeof e === "object" && "digest" in e && String(e.digest).startsWith("NEXT_REDIRECT")) {
           throw e;
         }
-        setError(e instanceof Error ? e.message : "Something went wrong saving this day.");
+        setServerError(e instanceof Error ? e.message : "Something went wrong.");
       }
     });
   }
 
+  const fieldErrorClass = "text-xs text-destructive";
+
   return (
-    <div className="flex flex-col gap-5">
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
       <div className="grid grid-cols-2 gap-4">
-        <label className="flex flex-col gap-1.5">
-          <span className={labelClass}>topic</span>
-          <select
-            value={topicId}
-            onChange={(e) => setTopicId(e.target.value)}
-            className={textareaClass}
-          >
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="topicId">topic</Label>
+          <Select {...register("topicId")}>
             {topics.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.title}
-              </option>
+              <option key={t.id} value={t.id}>{t.title}</option>
             ))}
-          </select>
-        </label>
-        <label className="flex flex-col gap-1.5">
-          <span className={labelClass}>day number</span>
-          <Input
-            type="number"
-            value={dayNumber}
-            onChange={(e) => setDayNumber(Number(e.target.value))}
-          />
-        </label>
+          </Select>
+          {errors.topicId && <p className={fieldErrorClass}>{errors.topicId.message}</p>}
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="dayNumber">day number</Label>
+          <Input type="number" {...register("dayNumber", { valueAsNumber: true })} />
+          {errors.dayNumber && <p className={fieldErrorClass}>{errors.dayNumber.message}</p>}
+        </div>
       </div>
 
-      <label className="flex flex-col gap-1.5">
-        <span className={labelClass}>slug (used in the URL)</span>
-        <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="binary-search-revisited" />
-      </label>
-
-      <label className="flex flex-col gap-1.5">
-        <span className={labelClass}>title</span>
-        <Input value={title} onChange={(e) => setTitle(e.target.value)} />
-      </label>
-
-      <label className="flex flex-col gap-1.5">
-        <span className={labelClass}>video URL</span>
-        <Input value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://youtube.com/watch?v=..." />
-      </label>
-
-      <label className="flex flex-col gap-1.5">
-        <span className={labelClass}>intro</span>
-        <textarea value={intro} onChange={(e) => setIntro(e.target.value)} rows={2} className={textareaClass} />
-      </label>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="slug">slug (used in the URL)</Label>
+        <Input {...register("slug")} placeholder="binary-search-revisited" />
+        {errors.slug && <p className={fieldErrorClass}>{errors.slug.message}</p>}
+      </div>
 
       <div className="flex flex-col gap-1.5">
-        <span className={labelClass}>objectives</span>
-        {objectives.map((o, i) => (
-          <div key={i} className="flex gap-2">
-            <Input
-              value={o}
-              onChange={(e) =>
-                setObjectives((os) => os.map((x, idx) => (idx === i ? e.target.value : x)))
-              }
-            />
+        <Label htmlFor="title">title</Label>
+        <Input {...register("title")} />
+        {errors.title && <p className={fieldErrorClass}>{errors.title.message}</p>}
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="videoUrl">video URL</Label>
+        <Input {...register("videoUrl")} placeholder="https://youtube.com/watch?v=..." />
+        {errors.videoUrl && <p className={fieldErrorClass}>{errors.videoUrl.message}</p>}
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="intro">intro</Label>
+        <Textarea {...register("intro")} rows={2} />
+        {errors.intro && <p className={fieldErrorClass}>{errors.intro.message}</p>}
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <Label>objectives</Label>
+        {objectivesArray.fields.map((field, i) => (
+          <div key={field.id} className="flex gap-2">
+            <Input {...register(`objectives.${i}`)} />
             <button
               type="button"
-              onClick={() => setObjectives((os) => os.filter((_, idx) => idx !== i))}
+              onClick={() => objectivesArray.remove(i)}
               className="text-muted-foreground"
               aria-label="Remove objective"
             >
@@ -137,55 +145,52 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
             </button>
           </div>
         ))}
+        {errors.objectives && (
+          <p className={fieldErrorClass}>{errors.objectives.message}</p>
+        )}
         <button
           type="button"
-          onClick={() => setObjectives((os) => [...os, ""])}
+          onClick={() => objectivesArray.append("")}
           className="flex items-center gap-1 self-start font-mono text-[11px] text-primary"
         >
           <Plus className="h-3 w-3" /> add objective
         </button>
       </div>
 
-      <label className="flex flex-col gap-1.5">
-        <span className={labelClass}>summary</span>
-        <textarea value={summary} onChange={(e) => setSummary(e.target.value)} rows={2} className={textareaClass} />
-      </label>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="summary">summary</Label>
+        <Textarea {...register("summary")} rows={2} />
+        {errors.summary && <p className={fieldErrorClass}>{errors.summary.message}</p>}
+      </div>
 
-      <label className="flex flex-col gap-1.5">
-        <span className={labelClass}>your notes</span>
-        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className={textareaClass} />
-      </label>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="notes">your notes</Label>
+        <Textarea {...register("notes")} rows={3} />
+        {errors.notes && <p className={fieldErrorClass}>{errors.notes.message}</p>}
+      </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <label className="flex flex-col gap-1.5">
-          <span className={labelClass}>publishes at</span>
-          <Input
-            type="datetime-local"
-            value={publishAt}
-            onChange={(e) => setPublishAt(e.target.value)}
-          />
-        </label>
-        <label className="flex flex-col gap-1.5">
-          <span className={labelClass}>grace period (hours)</span>
-          <Input
-            type="number"
-            value={graceHours}
-            onChange={(e) => setGraceHours(Number(e.target.value))}
-          />
-        </label>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="publishAt">publishes at</Label>
+          <Input type="datetime-local" {...register("publishAt")} />
+          {errors.publishAt && <p className={fieldErrorClass}>{errors.publishAt.message}</p>}
+        </div>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="graceHours">grace period (hours)</Label>
+          <Input type="number" {...register("graceHours", { valueAsNumber: true })} />
+          {errors.graceHours && <p className={fieldErrorClass}>{errors.graceHours.message}</p>}
+        </div>
       </div>
 
       <div className="flex flex-col gap-3 rounded-sm border border-border p-4">
-        <span className={labelClass}>closing-page quiz</span>
-        {questions.map((q, qi) => (
-          <div key={qi} className="rounded-sm border border-border p-3">
+        <Label>closing-page quiz</Label>
+        {questionsArray.fields.map((field, qi) => (
+          <div key={field.id} className="rounded-sm border border-border p-3">
             <div className="mb-2 flex items-center justify-between">
-              <span className="font-mono text-[10px] text-muted-foreground">
-                question {qi + 1}
-              </span>
+              <span className="font-mono text-[10px] text-muted-foreground">question {qi + 1}</span>
               <button
                 type="button"
-                onClick={() => setQuestions((qs) => qs.filter((_, i) => i !== qi))}
+                onClick={() => questionsArray.remove(qi)}
                 className="text-muted-foreground"
                 aria-label="Remove question"
               >
@@ -194,43 +199,51 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
             </div>
             <Input
               className="mb-2"
-              value={q.prompt}
+              {...register(`questions.${qi}.prompt`)}
               placeholder="Prompt"
-              onChange={(e) => updateQuestion(qi, { prompt: e.target.value })}
             />
-            {q.choices.map((c, ci) => (
+            {errors.questions?.[qi]?.prompt && (
+              <p className={cn(fieldErrorClass, "mb-1")}>{errors.questions[qi].prompt.message}</p>
+            )}
+            {field.choices.map((_, ci) => (
               <div key={ci} className="mb-1.5 flex items-center gap-2">
                 <input
                   type="radio"
-                  name={`correct-${qi}`}
-                  checked={q.correctIndex === ci}
-                  onChange={() => updateQuestion(qi, { correctIndex: ci })}
+                  {...register(`questions.${qi}.correctIndex`, { valueAsNumber: true })}
+                  value={ci}
+                  defaultChecked={field.correctIndex === ci}
                   aria-label={`Choice ${ci + 1} is correct`}
                 />
                 <Input
-                  value={c}
+                  {...register(`questions.${qi}.choices.${ci}`)}
                   placeholder={`Choice ${ci + 1}`}
-                  onChange={(e) =>
-                    updateQuestion(qi, {
-                      choices: q.choices.map((x, i) => (i === ci ? e.target.value : x)),
-                    })
-                  }
                 />
               </div>
             ))}
+            {errors.questions?.[qi]?.choices && (
+              <p className={fieldErrorClass}>{errors.questions[qi].choices.message}</p>
+            )}
             <button
               type="button"
-              onClick={() => updateQuestion(qi, { choices: [...q.choices, ""] })}
+              onClick={() =>
+                questionsArray.update(qi, {
+                  ...field,
+                  choices: [...field.choices, ""],
+                })
+              }
               className="flex items-center gap-1 font-mono text-[11px] text-primary"
             >
               <Plus className="h-3 w-3" /> add choice
             </button>
           </div>
         ))}
+        {errors.questions && !Array.isArray(errors.questions) && (
+          <p className={fieldErrorClass}>{errors.questions.message}</p>
+        )}
         <button
           type="button"
           onClick={() =>
-            setQuestions((qs) => [...qs, { prompt: "", choices: ["", ""], correctIndex: 0 }])
+            questionsArray.append({ prompt: "", choices: ["", ""], correctIndex: 0 })
           }
           className="flex items-center gap-1 self-start font-mono text-[11px] text-primary"
         >
@@ -238,32 +251,16 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
         </button>
       </div>
 
-      <label className="flex flex-col gap-1.5">
-        <span className={labelClass}>optional hand-graded task</span>
-        <textarea value={task} onChange={(e) => setTask(e.target.value)} rows={2} className={textareaClass} />
-      </label>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="task">optional hand-graded task</Label>
+        <Textarea {...register("task")} rows={2} />
+      </div>
 
-      {error && <p className="text-xs text-destructive">{error}</p>}
+      {serverError && <p className={fieldErrorClass}>{serverError}</p>}
 
-      <Button
-        disabled={
-          pending ||
-          !topicId ||
-          !slug ||
-          !title ||
-          !videoUrl ||
-          !intro ||
-          objectives.filter(Boolean).length === 0 ||
-          !summary ||
-          !notes ||
-          !publishAt ||
-          questions.filter((q) => q.prompt && q.choices.filter(Boolean).length >= 2).length === 0
-        }
-        onClick={submit}
-        className={cn("self-start")}
-      >
+      <Button type="submit" disabled={pending} className="self-start">
         {pending ? "Publishing…" : "Publish day"}
       </Button>
-    </div>
+    </form>
   );
 }

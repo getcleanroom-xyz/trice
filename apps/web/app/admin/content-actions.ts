@@ -22,7 +22,7 @@ const daySchema = z.object({
   objectives: z.array(z.string().min(1)).min(1),
   summary: z.string().min(1),
   notes: z.string().min(1),
-  publishAt: z.string().datetime(),
+  publishAt: z.string().min(1),
   graceHours: z.number().min(1).max(72),
   questions: z.array(dayQuestionSchema).min(1),
   task: z.string().optional(),
