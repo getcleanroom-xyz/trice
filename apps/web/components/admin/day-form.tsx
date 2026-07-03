@@ -53,8 +53,11 @@ interface FormValues {
 }
 
 export function DayForm({ topics }: { topics: { id: string; title: string }[] }) {
+  const [hydrated, setHydrated] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  useEffect(() => { setHydrated(true); }, []);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -118,7 +121,7 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
   const fieldErrorClass = "text-sm text-destructive mt-0.5";
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
+    <form onSubmit={handleSubmit(onSubmit)} action="#" className="flex flex-col gap-5">
       {(Object.keys(errors).length > 0 || serverError) && (
         <div className="rounded-sm border border-destructive/50 bg-destructive/10 px-4 py-3 font-mono text-sm text-destructive">
           {serverError ?? "Fix the errors below before publishing."}
@@ -305,7 +308,7 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
 
       {serverError && <p className={fieldErrorClass}>{serverError}</p>}
 
-      <Button type="submit" disabled={pending} className="self-start">
+      <Button type="submit" disabled={pending || !hydrated} className="self-start">
         {pending ? "Publishing…" : "Publish day"}
       </Button>
     </form>
