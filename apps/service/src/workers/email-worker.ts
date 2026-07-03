@@ -9,60 +9,70 @@ import { db, subscribers, days, emailSends, magicLinks } from "@/db";
 import { confirmationEmail } from "@/email/templates/confirmation";
 import { dailyDropEmail } from "@/email/templates/daily-drop";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
-// --- Email worker ---
-new Worker<EmailJob>("email", async (job) => {
-  const subscriber = (
-    await db.select().from(subscribers).where(eq(subscribers.id, job.data.subscriberId))
-  )[0];
-  if (!subscriber || subscriber.unsubscribedAt) return;
-
-  if (job.data.kind === "confirmation") {
-    const { error } = await resend.emails.send({
-      from: "Trice <hello@emails.getcleanroom.xyz>",
-      to: subscriber.email,
-      subject: "You're on the roll",
-      html: confirmationEmail(),
-    });
-    if (error) throw new Error(error.message);
-  } else {
-    const day = (await db.select().from(days).where(eq(days.id, job.data.dayId!)))[0];
-    if (!day) return;
-
-    const token = randomBytes(32).toString("base64url");
-    await db.insert(magicLinks).values({
-      token,
-      subscriberId: subscriber.id,
-      dayId: day.id,
-      expiresAt: day.expiresAt,
-    });
-
-    const { error } = await resend.emails.send({
-      from: "Trice <hello@emails.getcleanroom.xyz>",
-      to: subscriber.email,
-      subject: `Day ${day.title}`,
-      html: dailyDropEmail({
-        title: day.title,
-        slug: day.slug,
-        url: `${process.env.WEB_URL}/day/${day.slug}?token=${token}`,
-      }),
-    });
-    if (error) throw new Error(error.message);
-  }
-
-  await db.update(emailSends).set({ status: "sent", sentAt: new Date() }).where(
-    eq(emailSends.id, job.data.emailSendId),
-  );
-}, { connection }).on("failed", async (job, err) => {
-  if (!job) return;
-  console.error(`email send failed for ${job.data.emailSendId}:`, err.message);
-  await db.update(emailSends).set({ status: "failed" }).where(
-    eq(emailSends.id, job.data.emailSendId),
-  );
+console.log("worker starting — env check:", {
+  DATABASE_URL: process.env.DATABASE_URL ? "set" : "MISSING",
+  REDIS_URL: process.env.REDIS_URL ? "set" : "MISSING",
+  RESEND_API_KEY: process.env.RESEND_API_KEY ? "set" : "MISSING",
+  WEB_URL: process.env.WEB_URL ? "set" : "MISSING",
 });
 
-// --- Cron scheduler ---
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+try {
+  new Worker<EmailJob>("email", async (job) => {
+    const subscriber = (
+      await db.select().from(subscribers).where(eq(subscribers.id, job.data.subscriberId))
+    )[0];
+    if (!subscriber || subscriber.unsubscribedAt) return;
+
+    if (job.data.kind === "confirmation") {
+      const { error } = await resend.emails.send({
+        from: "Trice <hello@emails.getcleanroom.xyz>",
+        to: subscriber.email,
+        subject: "You're on the roll",
+        html: confirmationEmail(),
+      });
+      if (error) throw new Error(error.message);
+    } else {
+      const day = (await db.select().from(days).where(eq(days.id, job.data.dayId!)))[0];
+      if (!day) return;
+
+      const token = randomBytes(32).toString("base64url");
+      await db.insert(magicLinks).values({
+        token,
+        subscriberId: subscriber.id,
+        dayId: day.id,
+        expiresAt: day.expiresAt,
+      });
+
+      const { error } = await resend.emails.send({
+        from: "Trice <hello@emails.getcleanroom.xyz>",
+        to: subscriber.email,
+        subject: `Day ${day.title}`,
+        html: dailyDropEmail({
+          title: day.title,
+          slug: day.slug,
+          url: `${process.env.WEB_URL}/day/${day.slug}?token=${token}`,
+        }),
+      });
+      if (error) throw new Error(error.message);
+    }
+
+    await db.update(emailSends).set({ status: "sent", sentAt: new Date() }).where(
+      eq(emailSends.id, job.data.emailSendId),
+    );
+  }, { connection }).on("failed", async (job, err) => {
+    if (!job) return;
+    console.error("email send failed for", job.data.emailSendId, ":", err.message);
+    await db.update(emailSends).set({ status: "failed" }).where(
+      eq(emailSends.id, job.data.emailSendId),
+    );
+  });
+  console.log("bullmq email worker connected");
+} catch (err) {
+  console.error("bullmq worker init failed:", err);
+}
+
 const app = new Elysia()
   .use(cron({
     name: "daily-drop",
