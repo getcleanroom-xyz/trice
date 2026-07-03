@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Radio } from "@/components/ui/radio";
 import { cn } from "@/lib/utils";
 
 const questionSchema = z.object({
@@ -67,8 +68,8 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
     formState: { errors },
   } = form;
 
-  const objectivesArray = useFieldArray({ control, name: "objectives" });
-  const questionsArray = useFieldArray({ control, name: "questions" });
+  const objectivesArray = useFieldArray<FormValues>({ control, name: "objectives" as const });
+  const questionsArray = useFieldArray<FormValues>({ control, name: "questions" as const });
 
   function onSubmit(values: FormValues) {
     setServerError(null);
@@ -207,8 +208,7 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
             )}
             {field.choices.map((_, ci) => (
               <div key={ci} className="mb-1.5 flex items-center gap-2">
-                <input
-                  type="radio"
+                <Radio
                   {...register(`questions.${qi}.correctIndex`, { valueAsNumber: true })}
                   value={ci}
                   defaultChecked={field.correctIndex === ci}
