@@ -45,7 +45,7 @@ export default async function DayPage({
 
       <DailyContent
         title={day.title}
-        videoUrl={day.videoUrl}
+        videoUrls={day.videoUrls}
         notes={day.notes}
         intro={day.intro}
         objectives={day.objectives}

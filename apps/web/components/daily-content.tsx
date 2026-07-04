@@ -10,7 +10,7 @@ type Question = { id: string; prompt: string; choices: string[] };
 
 export function DailyContent({
   title,
-  videoUrl,
+  videoUrls,
   notes,
   intro,
   objectives,
@@ -20,7 +20,7 @@ export function DailyContent({
   questions,
 }: {
   title: string;
-  videoUrl: string;
+  videoUrls: string[];
   notes: string;
   intro: string;
   objectives: string[];
@@ -32,7 +32,7 @@ export function DailyContent({
   return (
     <DayLayout
       panels={{
-        video: <VideoPanel title={title} videoUrl={videoUrl} />,
+        video: <VideoPanel title={title} videoUrls={videoUrls} />,
         notes: <NoteCard notes={notes} />,
         tabs: <InfoTabs intro={intro} objectives={objectives} summary={summary} />,
         quiz: (

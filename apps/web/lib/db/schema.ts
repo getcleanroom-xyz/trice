@@ -46,7 +46,7 @@ export const days = pgTable("days", {
   dayNumber: integer("day_number").notNull(),
   slug: text("slug").notNull(),
   title: text("title").notNull(),
-  videoUrl: text("video_url").notNull(),
+  videoUrls: jsonb("video_urls").$type<string[]>().notNull(),
   intro: text("intro").notNull(),
   objectives: jsonb("objectives").$type<string[]>().notNull(),
   summary: text("summary").notNull(),

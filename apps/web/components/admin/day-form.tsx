@@ -25,7 +25,7 @@ const formSchema = z.object({
   dayNumber: z.number().int().min(1),
   slug: z.string().min(1).regex(/^[a-z0-9-]+$/, "lowercase letters, numbers, hyphens only"),
   title: z.string().min(1, "Enter a title"),
-  videoUrl: z.string().url("Enter a valid URL"),
+  videoUrls: z.array(z.string().url("Enter a valid URL")).min(1, "Add at least one video"),
   intro: z.string().min(1, "Write an intro"),
   objectives: z.array(z.object({ value: z.string().min(1) })).min(1),
   summary: z.string().min(1, "Write a summary"),
@@ -41,7 +41,7 @@ interface FormValues {
   dayNumber: number;
   slug: string;
   title: string;
-  videoUrl: string;
+  videoUrls: string[];
   intro: string;
   objectives: { value: string }[];
   summary: string;
@@ -63,7 +63,7 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
       dayNumber: 1,
       slug: "",
       title: "",
-      videoUrl: "",
+      videoUrls: [""],
       intro: "",
       objectives: [{ value: "" }],
       summary: "",
@@ -101,6 +101,7 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
 
   const objectivesArray = useFieldArray<FormValues, "objectives">({ control, name: "objectives" });
   const questionsArray = useFieldArray<FormValues, "questions">({ control, name: "questions" });
+  const videoUrlsArray = useFieldArray<FormValues, "videoUrls">({ control, name: "videoUrls" });
 
   function onSubmit(values: FormValues) {
     setServerError(null);
@@ -168,9 +169,32 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
       </div>
 
       <div className="flex flex-col gap-1.5">
-        <Label htmlFor="videoUrl">video URL</Label>
-        <Input {...register("videoUrl")} placeholder="https://youtube.com/watch?v=..." />
-        {errors.videoUrl && <p className={fieldErrorClass}>{errors.videoUrl.message}</p>}
+        <Label>video URLs (embed links)</Label>
+        {videoUrlsArray.fields.map((field, i) => (
+          <div key={field.id} className="flex gap-2">
+            <Input {...register(`videoUrls.${i}`)} placeholder="https://www.youtube.com/embed/..." />
+            {videoUrlsArray.fields.length > 1 && (
+              <button
+                type="button"
+                onClick={() => videoUrlsArray.remove(i)}
+                className="text-muted-foreground"
+                aria-label="Remove video"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        ))}
+        {errors.videoUrls && (
+          <p className={fieldErrorClass}>{errors.videoUrls.message}</p>
+        )}
+        <button
+          type="button"
+          onClick={() => videoUrlsArray.append("")}
+          className="flex items-center gap-1 self-start font-mono text-[11px] text-primary"
+        >
+          <Plus className="h-3 w-3" /> add video
+        </button>
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -221,7 +245,11 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="publishAt">publishes at</Label>
-          <Input type="datetime-local" {...register("publishAt")} />
+          <Input
+            type="datetime-local"
+            {...register("publishAt")}
+            className="[&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:opacity-60 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+          />
           {errors.publishAt && <p className={fieldErrorClass}>{errors.publishAt.message}</p>}
         </div>
         <div className="flex flex-col gap-1.5">
