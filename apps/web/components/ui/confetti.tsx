@@ -35,7 +35,7 @@ function Confetti({ duration = 3000 }: { duration?: number }) {
 
     function draw(now: number) {
       const elapsed = now - start;
-      if (elapsed > duration || !ctx || !canvas) { ctx?.clearRect(0, 0, canvas?.width ?? 0, canvas?.height ?? 0); return; }
+      if (elapsed > duration || !ctx || !canvas) return;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const alpha = Math.max(0, 1 - elapsed / duration);
