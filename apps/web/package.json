@@ -21,8 +21,10 @@
     "postgres": "3.4.9",
     "react": "19.2.7",
     "react-dom": "19.2.7",
+    "react-grid-layout": "^2.2.3",
     "react-hook-form": "7.69.0",
     "react-markdown": "^10.1.0",
+    "react-resizable": "^4.0.2",
     "resend": "6.16.0",
     "tailwind-merge": "3.6.0",
     "zod": "4.4.3"

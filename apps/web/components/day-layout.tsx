@@ -1,88 +1,69 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { GridLayout, useContainerWidth, type Layout } from "react-grid-layout";
+import "react-grid-layout/css/styles.css";
+import "react-resizable/css/styles.css";
 
-type PanelKey = "video" | "notes" | "tabs" | "quiz";
+const DEFAULT_LAYOUT: Layout = [
+  { i: "video", x: 0, y: 0, w: 7, h: 10, minW: 4, minH: 6 },
+  { i: "notes", x: 7, y: 0, w: 5, h: 7, minW: 3, minH: 4 },
+  { i: "tabs", x: 0, y: 10, w: 12, h: 7, minW: 6, minH: 4 },
+  { i: "quiz", x: 0, y: 17, w: 12, h: 8, minW: 6, minH: 4 },
+];
 
-const DEFAULT_ORDER: PanelKey[] = ["video", "notes", "tabs", "quiz"];
-
-function loadOrder(): PanelKey[] {
-  if (typeof window === "undefined") return DEFAULT_ORDER;
+function loadOrder(): Layout {
+  if (typeof window === "undefined") return DEFAULT_LAYOUT;
   try {
-    const raw = localStorage.getItem("trice_panel_order");
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length === 4) return parsed;
-    }
+    const raw = localStorage.getItem("trice_layout_v2");
+    if (raw) return JSON.parse(raw);
   } catch {}
-  return DEFAULT_ORDER;
+  return DEFAULT_LAYOUT;
 }
 
-function saveOrder(order: PanelKey[]) {
-  try { localStorage.setItem("trice_panel_order", JSON.stringify(order)); } catch {}
+function saveLayout(layout: Layout) {
+  try {
+    localStorage.setItem("trice_layout_v2", JSON.stringify(
+      layout.map(({ i, x, y, w, h }) => ({ i, x, y, w, h })),
+    ));
+  } catch {}
 }
 
-export function DayLayout({ panels }: { panels: Record<PanelKey, React.ReactNode> }) {
-  const [order, setOrder] = useState<PanelKey[]>(loadOrder);
-  const [dragging, setDragging] = useState<PanelKey | null>(null);
+export function DayLayout({ panels }: { panels: Record<string, React.ReactNode> }) {
+  const { width, containerRef, mounted } = useContainerWidth();
+  const [layout, setLayout] = useState<Layout>(loadOrder);
 
-  const handleDragStart = useCallback((key: PanelKey) => {
-    setDragging(key);
+  const onLayoutChange = useCallback((next: Layout) => {
+    setLayout(next);
+    saveLayout(next);
   }, []);
 
-  const handleDrop = useCallback((target: PanelKey) => {
-    if (!dragging || dragging === target) { setDragging(null); return; }
-    setOrder((prev) => {
-      const next = [...prev];
-      const fromIdx = next.indexOf(dragging);
-      const toIdx = next.indexOf(target);
-      next.splice(fromIdx, 1);
-      next.splice(toIdx, 0, dragging);
-      saveOrder(next);
-      return next;
-    });
-    setDragging(null);
-  }, [dragging]);
-
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5">
-      {order.map((key) => {
-        const isTop = key === "video" || key === "notes";
-        return (
-          <div
-            key={key}
-            draggable
-            onDragStart={() => handleDragStart(key)}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={() => handleDrop(key)}
-            className={cn(
-              "min-h-0 transition-opacity",
-              isTop ? "lg:col-span-6" : "lg:col-span-12",
-              dragging === key && "opacity-50",
-            )}
-          >
-            <PanelShell>
-              {panels[key]}
-            </PanelShell>
-          </div>
-        );
-      })}
+    <div ref={containerRef} className="mb-4">
+      {mounted && width > 0 && (
+        <GridLayout
+          layout={layout}
+          width={width}
+          gridConfig={{ cols: 12, rowHeight: 28, margin: [12, 12] }}
+          dragConfig={{
+            enabled: true,
+            bounded: true,
+            handle: ".drag-handle",
+            threshold: 3,
+          }}
+          resizeConfig={{
+            enabled: true,
+            handles: ["se"],
+          }}
+          onLayoutChange={onLayoutChange}
+        >
+          {Object.entries(panels).map(([key, node]) => (
+            <div key={key} className="relative">
+              {node}
+            </div>
+          ))}
+        </GridLayout>
+      )}
     </div>
   );
 }
-
-function PanelShell({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="h-full min-h-0 overflow-hidden rounded-lg border border-border bg-card">
-      {children}
-    </div>
-  );
-}
-
-function cn(...classes: (string | false | null | undefined)[]) {
-  return classes.filter(Boolean).join(" ");
-}
-
-type DayLayoutProps = {
-  panels: Record<PanelKey, React.ReactNode>;
-};

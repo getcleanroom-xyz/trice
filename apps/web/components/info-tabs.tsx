@@ -24,7 +24,7 @@ export function InfoTabs({
   ];
 
   return (
-    <div className="rounded-lg border border-border bg-card">
+    <div className="flex flex-col h-full rounded-lg border border-border bg-card overflow-hidden">
       <div className="flex items-center border-b border-border">
         {tabs.map((t) => (
           <button
@@ -49,11 +49,11 @@ export function InfoTabs({
         </button>
       </div>
       {!minimized && (
-        <div className="p-5 max-h-80 overflow-y-auto scrollbar-thin">
-          <div className="prose prose-sm prose-invert max-w-none text-[14px] leading-relaxed text-foreground/90">
+        <div className="flex-1 min-h-0 overflow-y-auto p-5 scrollbar-thin">
+          <div className="text-[14px] leading-relaxed text-foreground/90">
             {tab === "intro" && <Markdown>{intro}</Markdown>}
             {tab === "objectives" && (
-              <ul className="space-y-1.5 pl-5 list-disc marker:text-primary/50">
+              <ul className="space-y-2 pl-5 list-disc marker:text-primary/50">
                 {objectives.map((o, i) => (
                   <li key={i} className="leading-relaxed"><Markdown>{o}</Markdown></li>
                 ))}
