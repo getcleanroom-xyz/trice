@@ -377,14 +377,20 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
             {errors.questions?.[qi]?.prompt && (
               <p className={cn(fieldErrorClass, "mb-1")}>{errors.questions[qi].prompt.message}</p>
             )}
+            <div className="mb-1.5 flex items-center gap-2">
+              <span className="font-mono text-[10px] text-muted-foreground whitespace-nowrap">correct</span>
+              <select
+                {...register(`questions.${qi}.correctIndex`, { valueAsNumber: true })}
+                className="h-8 w-10 rounded-sm border border-input bg-transparent px-1 text-center text-xs text-foreground font-mono focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                value={getValues(`questions.${qi}.correctIndex`) ?? 0}
+              >
+                {field.choices.map((_, ci) => (
+                  <option key={ci} value={ci}>{ci + 1}</option>
+                ))}
+              </select>
+            </div>
             {field.choices.map((_, ci) => (
               <div key={ci} className="mb-1.5 flex items-center gap-2">
-                <RadioInput
-                  {...register(`questions.${qi}.correctIndex`, { valueAsNumber: true })}
-                  value={ci}
-                  defaultChecked={getValues(`questions.${qi}.correctIndex`) === ci}
-                  aria-label={`Choice ${ci + 1} is correct`}
-                />
                 <Input
                   {...register(`questions.${qi}.choices.${ci}`)}
                   placeholder={`Choice ${ci + 1}`}
