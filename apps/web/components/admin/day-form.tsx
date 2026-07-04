@@ -64,9 +64,9 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
       dayNumber: 1,
       slug: "",
       title: "",
-      videoUrls: [{ url: "" }],
+      videoUrls: [],
       intro: "",
-      objectives: [{ value: "" }],
+      objectives: [],
       summary: "",
       notes: "",
       publishAt: "",
@@ -128,7 +128,9 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
       {(Object.keys(errors).length > 0 || serverError) && (
         <div className="rounded-sm border border-destructive/50 bg-destructive/10 px-4 py-3 font-mono text-sm text-destructive">
-          {serverError ?? "Fix the errors below before publishing."}
+          {serverError
+            ? serverError
+            : `${Object.keys(errors).length} field${Object.keys(errors).length > 1 ? "s" : ""} need${Object.keys(errors).length === 1 ? "s" : ""} fixing — scroll below to see each one.`}
         </div>
       )}
 
