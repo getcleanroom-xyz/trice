@@ -1,24 +1,5 @@
 import type { Metadata } from "next";
-import { Fraunces, Work_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
-
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  axes: ["opsz"],
-  variable: "--font-serif",
-});
-
-const workSans = Work_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  variable: "--font-sans",
-});
-
-const ibmPlexMono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  variable: "--font-mono",
-});
 
 export const metadata: Metadata = {
   title: "Trice — fifteen minutes, spent well",
@@ -30,11 +11,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body
-        className={`${fraunces.variable} ${workSans.variable} ${ibmPlexMono.variable} min-h-screen`}
-      >
-        {children}
-      </body>
+      <body className="min-h-screen">{children}</body>
     </html>
   );
 }
