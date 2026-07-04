@@ -170,17 +170,17 @@ export function DayForm({ topics, dayData, dayId }: { topics: { id: string; titl
     setServerError(null);
     startTransition(async () => {
       try {
-        const values = {
+        const flat = {
           ...values,
           objectives: values.objectives.map((o) => o.value),
           videoUrls: values.videoUrls.map((v) => v.url),
         };
         if (dayId) {
-          await updateDay(dayId, values);
+          await updateDay(dayId, flat);
         } else {
-          await createDay(values);
+          await createDay(flat);
         }
-        try { localStorage.removeItem(`trice_draft_${values.slug}`); } catch {}
+        try { localStorage.removeItem(`trice_draft_${flat.slug}`); } catch {}
         toast("Day published successfully!", "success");
       } catch (e) {
         if (e && typeof e === "object" && "digest" in e && String(e.digest).startsWith("NEXT_REDIRECT")) {
