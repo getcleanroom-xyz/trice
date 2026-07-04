@@ -67,7 +67,7 @@ function DateTimePicker({
               type="time"
               value={timeValue}
               onChange={handleTimeChange}
-              className="h-9"
+              className="h-9 w-32"
             />
           </div>
         </PopoverContent>
