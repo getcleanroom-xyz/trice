@@ -117,17 +117,36 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
   }, [watchedTitle, setValue]);
 
   const saveDraft = useCallback(() => {
-    const s = watchedSlug || watchedTitle?.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || undefined;
-    if (!s) return;
-    try { localStorage.setItem(`trice_draft_${s}`, JSON.stringify(getValues())); } catch {}
-  }, [watchedSlug, watchedTitle, getValues]);
+    const slug = getValues("slug") || getValues("title").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    if (!slug) return;
+    try { localStorage.setItem(`trice_draft_${slug}`, JSON.stringify(getValues())); } catch {}
+  }, [getValues]);
+
+  const allValues = watch();
 
   const draftTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
   useEffect(() => {
     if (draftTimer.current) clearTimeout(draftTimer.current);
     draftTimer.current = setTimeout(saveDraft, 1000);
     return () => { if (draftTimer.current) clearTimeout(draftTimer.current); };
-  }, [saveDraft, watchedTitle, watchedSlug]);
+  }, [allValues, saveDraft]);
+
+  useEffect(() => {
+    const onUnload = () => saveDraft();
+    window.addEventListener("beforeunload", onUnload);
+    return () => window.removeEventListener("beforeunload", onUnload);
+  }, [saveDraft]);
+
+  useEffect(() => {
+    if (allValues.slug) {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get("draft") !== allValues.slug) {
+        url.searchParams.set("draft", allValues.slug);
+        window.history.replaceState({}, "", url.toString());
+      }
+    }
+  }, [allValues.slug]);
 
   const objectivesArray = useFieldArray<FormValues, "objectives">({ control, name: "objectives" });
   const questionsArray = useFieldArray<FormValues, "questions">({ control, name: "questions" });
