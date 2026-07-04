@@ -80,7 +80,7 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
       notes: draft?.notes ?? "",
       publishAt: draft?.publishAt ?? "",
       graceHours: draft?.graceHours ?? 24,
-      questions: draft?.questions ?? [{ prompt: "", choices: ["", ""], correctIndex: 0 }],
+      questions: draft?.questions ?? [],
       task: draft?.task ?? "",
     };
   }
