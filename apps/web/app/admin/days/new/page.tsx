@@ -5,7 +5,8 @@ import { DayForm } from "@/components/admin/day-form";
 export const dynamic = "force-dynamic";
 
 export default async function NewDayPage() {
-  const topics = await listTopics();
+  const topicsResult = await listTopics();
+  const topics = topicsResult.data;
   return (
     <main className="mx-auto max-w-2xl px-6 py-12">
       <span className="mb-8 block font-serif text-lg italic">

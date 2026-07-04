@@ -6,7 +6,8 @@ export const dynamic = "force-dynamic";
 
 export default async function EditDayPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [day, topics] = await Promise.all([getDay(id), listTopics()]);
+  const [day, topicsResult] = await Promise.all([getDay(id), listTopics()]);
+  const topics = topicsResult.data;
 
   if (!day) notFound();
 
