@@ -154,13 +154,32 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
 
   const fieldErrorClass = "text-sm text-destructive mt-0.5";
 
+  const fieldNames: Record<string, string> = {
+    topicId: "topic",
+    dayNumber: "day number",
+    slug: "slug",
+    title: "title",
+    videoUrls: "video URLs",
+    intro: "intro",
+    objectives: "objectives",
+    summary: "summary",
+    notes: "your notes",
+    publishAt: "publishes at",
+    graceHours: "grace period",
+    questions: "quiz questions",
+    task: "hand-graded task",
+  };
+
+  const invalidFields = Object.keys(errors).map((k) => fieldNames[k] ?? k);
+  const hasErrors = invalidFields.length > 0;
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
-      {(Object.keys(errors).length > 0 || serverError) && (
+      {(hasErrors || serverError) && (
         <div className="rounded-sm border border-destructive/50 bg-destructive/10 px-4 py-3 font-mono text-sm text-destructive">
           {serverError
             ? serverError
-            : `${Object.keys(errors).length} field${Object.keys(errors).length > 1 ? "s" : ""} need${Object.keys(errors).length === 1 ? "s" : ""} fixing — scroll below to see each one.`}
+            : `${invalidFields.join(", ")} ${invalidFields.length === 1 ? "needs" : "need"} fixing.`}
         </div>
       )}
 

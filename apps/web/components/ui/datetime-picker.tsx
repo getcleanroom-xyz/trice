@@ -63,7 +63,7 @@ function DateTimePicker({
             {displayDate}
           </span>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
+        <PopoverContent className="p-0" align="start" style={{ width: "var(--radix-popover-trigger-width)" }}>
           <Calendar
             mode="single"
             selected={dateValue}
