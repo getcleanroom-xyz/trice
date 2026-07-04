@@ -131,4 +131,4 @@ function AdminTabs({ activeTab }: { activeTab: "topics" | "days" }) {
   );
 }
 
-export { SearchInput, SortSelect, Pagination, Tabs, AdminTabs };
+export { SearchInput, SortSelect, Pagination, AdminTabs };
