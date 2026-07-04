@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition, useRef } from "react";
+import { useState, useEffect, useTransition, useRef, useCallback } from "react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -57,23 +57,37 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
   const [serverError, setServerError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
+  function loadDraft(slug: string): Partial<FormValues> | null {
+    try {
+      const raw = localStorage.getItem(`trice_draft_${slug}`);
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  }
+
+  function getInitialValues(): FormValues {
+    const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+    const draftSlug = params.get("draft");
+    const draft = draftSlug ? loadDraft(draftSlug) : null;
+    return {
+      topicId: draft?.topicId ?? topics[0]?.id ?? "",
+      dayNumber: draft?.dayNumber ?? 1,
+      slug: draft?.slug ?? "",
+      title: draft?.title ?? "",
+      videoUrls: draft?.videoUrls ?? [],
+      intro: draft?.intro ?? "",
+      objectives: draft?.objectives ?? [],
+      summary: draft?.summary ?? "",
+      notes: draft?.notes ?? "",
+      publishAt: draft?.publishAt ?? "",
+      graceHours: draft?.graceHours ?? 24,
+      questions: draft?.questions ?? [{ prompt: "", choices: ["", ""], correctIndex: 0 }],
+      task: draft?.task ?? "",
+    };
+  }
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      topicId: topics[0]?.id ?? "",
-      dayNumber: 1,
-      slug: "",
-      title: "",
-      videoUrls: [],
-      intro: "",
-      objectives: [],
-      summary: "",
-      notes: "",
-      publishAt: "",
-      graceHours: 24,
-      questions: [{ prompt: "", choices: ["", ""], correctIndex: 0 }],
-      task: "",
-    },
+    defaultValues: getInitialValues(),
     shouldFocusError: false,
   });
 
@@ -88,6 +102,7 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
   } = form;
 
   const watchedTitle = watch("title");
+  const watchedSlug = watch("slug");
   const slugTouchedRef = useRef(false);
 
   useEffect(() => {
@@ -100,6 +115,19 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
       setValue("slug", generated, { shouldValidate: false });
     }
   }, [watchedTitle, setValue]);
+
+  const saveDraft = useCallback(() => {
+    const s = watchedSlug || watchedTitle?.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || undefined;
+    if (!s) return;
+    try { localStorage.setItem(`trice_draft_${s}`, JSON.stringify(getValues())); } catch {}
+  }, [watchedSlug, watchedTitle, getValues]);
+
+  const draftTimer = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(() => {
+    if (draftTimer.current) clearTimeout(draftTimer.current);
+    draftTimer.current = setTimeout(saveDraft, 1000);
+    return () => { if (draftTimer.current) clearTimeout(draftTimer.current); };
+  }, [saveDraft, watchedTitle, watchedSlug]);
 
   const objectivesArray = useFieldArray<FormValues, "objectives">({ control, name: "objectives" });
   const questionsArray = useFieldArray<FormValues, "questions">({ control, name: "questions" });
@@ -114,6 +142,7 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
           objectives: values.objectives.map((o) => o.value),
           videoUrls: values.videoUrls.map((v) => v.url),
         });
+        try { localStorage.removeItem(`trice_draft_${values.slug}`); } catch {}
       } catch (e) {
         if (e && typeof e === "object" && "digest" in e && String(e.digest).startsWith("NEXT_REDIRECT")) {
           throw e;

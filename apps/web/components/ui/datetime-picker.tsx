@@ -25,7 +25,11 @@ function DateTimePicker({
   placeholder?: string;
   className?: string;
 }) {
-  const dateValue = value ? new Date(value) : undefined;
+  const dateValue = (() => {
+    if (!value || value.length < 10) return undefined;
+    const d = new Date(value);
+    return isNaN(d.getTime()) ? undefined : d;
+  })();
 
   function handleDateSelect(date: Date | undefined) {
     if (!date) return;
