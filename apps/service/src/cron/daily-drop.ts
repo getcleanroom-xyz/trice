@@ -4,48 +4,103 @@ import { eq, and, isNull, gte, lte } from "drizzle-orm";
 import { db, days, subscribers, emailSends } from "@/db";
 import { emailQueue } from "@/queues/email-queue";
 
-// Two crons, deliberately separate:
-//  - dailyDrop fires once at 7am WAT and fans a `daily_drop` email_sends
-//    row out to every active subscriber for whichever day just opened.
-//  - pollQueuedEmails runs every 30s and turns any `queued` email_sends
-//    row — from either cron below, from the web app's signup action, or
-//    from a hand-retried failure — into an actual BullMQ job. Using the
-//    row's own id as the BullMQ jobId makes re-polling idempotent: adding
-//    the same jobId twice is a no-op, so there's no dedupe logic to get
-//    wrong here.
+// Three crons, each with a clear responsibility:
+//
+//  1. on-time-delivery — runs every 60 seconds. For each "live" day
+//     (publishAt <= now <= expiresAt), finds active subscribers who don't
+//     yet have an email_sends row and batch-inserts them. This is fully
+//     idempotent: re-running never creates duplicates, so it catches any
+//     window the previous run missed (crash, cold start, subscriber joined
+//     after initial send).
+//
+//  2. poll-queued-emails — runs every 30 seconds. Turns queued email_sends
+//     rows into BullMQ jobs for the worker to send.
+//
+//  3. daily-drop — safety net at 7am WAT weekdays. Uses the same logic as
+//     on-time-delivery but as a backup in case the frequent cron was down.
 export const dailyDropCron = new Elysia()
   .use(
     cron({
+      name: "on-time-delivery",
+      pattern: "* * * * *",
+      async run() {
+        try {
+          const now = new Date();
+
+          const liveDays = await db
+            .select({ id: days.id })
+            .from(days)
+            .where(and(lte(days.publishAt, now), gte(days.expiresAt, now)));
+
+          for (const day of liveDays) {
+            const missing = await db
+              .select({ id: subscribers.id })
+              .from(subscribers)
+              .leftJoin(
+                emailSends,
+                and(
+                  eq(emailSends.subscriberId, subscribers.id),
+                  eq(emailSends.dayId, day.id),
+                ),
+              )
+              .where(and(isNull(subscribers.unsubscribedAt), isNull(emailSends.id)));
+
+            if (missing.length === 0) continue;
+
+            await db.insert(emailSends).values(
+              missing.map((s) => ({
+                subscriberId: s.id,
+                dayId: day.id,
+                kind: "daily_drop" as const,
+                status: "queued" as const,
+              })),
+            );
+          }
+        } catch (err) {
+          console.error("on-time-delivery cron failed:", err);
+        }
+      },
+    }),
+  )
+  .use(
+    cron({
       name: "daily-drop",
-      pattern: "0 7 * * 1-5", // 07:00 WAT, weekdays — adjust for your audience
+      pattern: "0 7 * * 1-5",
       timezone: "Africa/Lagos",
       async run() {
         try {
           const now = new Date();
           const openDay = (
             await db
-              .select()
+              .select({ id: days.id })
               .from(days)
               .where(and(lte(days.publishAt, now), gte(days.expiresAt, now)))
               .limit(1)
           )[0];
           if (!openDay) return;
 
-          const activeSubscribers = await db
-            .select()
+          const missing = await db
+            .select({ id: subscribers.id })
             .from(subscribers)
-            .where(isNull(subscribers.unsubscribedAt));
+            .leftJoin(
+              emailSends,
+              and(
+                eq(emailSends.subscriberId, subscribers.id),
+                eq(emailSends.dayId, openDay.id),
+              ),
+            )
+            .where(and(isNull(subscribers.unsubscribedAt), isNull(emailSends.id)));
 
-          if (activeSubscribers.length === 0) return;
+          if (missing.length === 0) return;
 
-          for (const subscriber of activeSubscribers) {
-            await db.insert(emailSends).values({
-              subscriberId: subscriber.id,
+          await db.insert(emailSends).values(
+            missing.map((s) => ({
+              subscriberId: s.id,
               dayId: openDay.id,
-              kind: "daily_drop",
-              status: "queued",
-            });
-          }
+              kind: "daily_drop" as const,
+              status: "queued" as const,
+            })),
+          );
         } catch (err) {
           console.error("daily-drop cron failed:", err);
         }
