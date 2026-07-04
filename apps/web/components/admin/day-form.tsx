@@ -375,15 +375,24 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
             )}
             <div className="mb-1.5 flex items-center gap-2">
               <span className="font-mono text-[10px] text-muted-foreground whitespace-nowrap">correct</span>
-              <select
-                {...register(`questions.${qi}.correctIndex`, { valueAsNumber: true })}
-                className="h-8 w-10 rounded-sm border border-input bg-transparent px-1 text-center text-xs text-foreground font-mono focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                value={getValues(`questions.${qi}.correctIndex`) ?? 0}
-              >
-                {field.choices.map((_, ci) => (
-                  <option key={ci} value={ci}>{ci + 1}</option>
-                ))}
-              </select>
+              <Controller
+                control={control}
+                name={`questions.${qi}.correctIndex`}
+                render={({ field: rf }) => (
+                  <Select value={String(rf.value ?? 0)} onValueChange={(v) => rf.onChange(Number(v))}>
+                    <SelectTrigger className="h-8 w-16 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {field.choices.map((_, ci) => (
+                        <SelectItem key={ci} value={String(ci)}>
+                          {ci + 1}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
             {field.choices.map((_, ci) => (
               <div key={ci} className="mb-1.5 flex items-center gap-2">
