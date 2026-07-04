@@ -80,7 +80,7 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
       notes: draft?.notes ?? "",
       publishAt: draft?.publishAt ?? "",
       graceHours: draft?.graceHours ?? 24,
-      questions: draft?.questions ?? [],
+      questions: (draft?.questions ?? []).filter((q: FormValues["questions"][0]) => q.prompt || q.choices.some((c: string) => c !== "")),
       task: draft?.task ?? "",
     };
   }
@@ -166,6 +166,16 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
         if (e && typeof e === "object" && "digest" in e && String(e.digest).startsWith("NEXT_REDIRECT")) {
           throw e;
         }
+        setServerError(e instanceof Error ? e.message : "Something went wrong.");
+      }
+    });
+  }
+
+  React.useEffect(() => {
+    if (Object.keys(errors).length > 0) {
+      console.log("Form validation errors:", JSON.stringify(errors, null, 2));
+    }
+  }, [errors]);
         setServerError(e instanceof Error ? e.message : "Something went wrong.");
       }
     });
