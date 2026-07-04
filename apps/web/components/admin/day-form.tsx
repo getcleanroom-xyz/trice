@@ -25,7 +25,7 @@ const formSchema = z.object({
   dayNumber: z.number().int().min(1),
   slug: z.string().min(1).regex(/^[a-z0-9-]+$/, "lowercase letters, numbers, hyphens only"),
   title: z.string().min(1, "Enter a title"),
-  videoUrls: z.array(z.string().url("Enter a valid URL")).min(1, "Add at least one video"),
+  videoUrls: z.array(z.object({ url: z.string().url("Enter a valid URL") })).min(1, "Add at least one video"),
   intro: z.string().min(1, "Write an intro"),
   objectives: z.array(z.object({ value: z.string().min(1) })).min(1),
   summary: z.string().min(1, "Write a summary"),
@@ -41,7 +41,7 @@ interface FormValues {
   dayNumber: number;
   slug: string;
   title: string;
-  videoUrls: string[];
+  videoUrls: { url: string }[];
   intro: string;
   objectives: { value: string }[];
   summary: string;
@@ -63,7 +63,7 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
       dayNumber: 1,
       slug: "",
       title: "",
-      videoUrls: [""],
+      videoUrls: [{ url: "" }],
       intro: "",
       objectives: [{ value: "" }],
       summary: "",
@@ -107,7 +107,11 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
     setServerError(null);
     startTransition(async () => {
       try {
-        await createDay({ ...values, objectives: values.objectives.map((o) => o.value) });
+        await createDay({
+          ...values,
+          objectives: values.objectives.map((o) => o.value),
+          videoUrls: values.videoUrls.map((v) => v.url),
+        });
       } catch (e) {
         if (e && typeof e === "object" && "digest" in e && String(e.digest).startsWith("NEXT_REDIRECT")) {
           throw e;
@@ -176,7 +180,7 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
         <Label>video URLs (embed links)</Label>
         {videoUrlsArray.fields.map((field, i) => (
           <div key={field.id} className="flex gap-2">
-            <Input {...register(`videoUrls.${i}`)} placeholder="https://www.youtube.com/embed/..." />
+            <Input {...register(`videoUrls.${i}.url`)} placeholder="https://www.youtube.com/embed/..." />
             {videoUrlsArray.fields.length > 1 && (
               <button
                 type="button"
@@ -194,7 +198,7 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
         )}
         <button
           type="button"
-          onClick={() => videoUrlsArray.append("")}
+          onClick={() => videoUrlsArray.append({ url: "" })}
           className="flex items-center gap-1 self-start font-mono text-[11px] text-primary"
         >
           <Plus className="h-3 w-3" /> add video
