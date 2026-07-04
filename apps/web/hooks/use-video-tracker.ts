@@ -16,7 +16,7 @@ function useVideoTracker({
   const accumulatedRef = useRef(0);
   const [completed, setCompleted] = useState(false);
   const [watchSeconds, setWatchSeconds] = useState(0);
-  const saveTimer = useRef<ReturnType<typeof setTimeout>>();
+  const saveTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const completedRef = useRef(false);
 
   const save = useCallback((seconds: number) => {
