@@ -171,7 +171,7 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
     });
   }
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (Object.keys(errors).length > 0) {
       console.log("Form validation errors:", JSON.stringify(errors, null, 2));
     }
