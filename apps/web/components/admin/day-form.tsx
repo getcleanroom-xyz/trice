@@ -176,10 +176,6 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
       console.log("Form validation errors:", JSON.stringify(errors, null, 2));
     }
   }, [errors]);
-        setServerError(e instanceof Error ? e.message : "Something went wrong.");
-      }
-    });
-  }
 
   const fieldErrorClass = "text-sm text-destructive mt-0.5";
 
