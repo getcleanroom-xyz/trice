@@ -122,7 +122,7 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
     try { localStorage.setItem(`trice_draft_${s}`, JSON.stringify(getValues())); } catch {}
   }, [watchedSlug, watchedTitle, getValues]);
 
-  const draftTimer = useRef<ReturnType<typeof setTimeout>>();
+  const draftTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => {
     if (draftTimer.current) clearTimeout(draftTimer.current);
     draftTimer.current = setTimeout(saveDraft, 1000);
