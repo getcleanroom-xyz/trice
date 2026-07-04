@@ -8,6 +8,12 @@ import { Label } from "@/components/ui/label";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 
+function pad(n: number) { return String(n).padStart(2, "0"); }
+
+function toLocalString(d: Date): string {
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 function DateTimePicker({
   value,
   onChange,
@@ -26,14 +32,14 @@ function DateTimePicker({
     const hours = dateValue ? dateValue.getHours() : 7;
     const minutes = dateValue ? dateValue.getMinutes() : 0;
     date.setHours(hours, minutes);
-    onChange?.(date.toISOString().slice(0, 16));
+    onChange?.(toLocalString(date));
   }
 
   function handleTimeChange(e: React.ChangeEvent<HTMLInputElement>) {
     const [h, m] = e.target.value.split(":").map(Number);
     const d = dateValue ? new Date(dateValue) : new Date();
     d.setHours(h, m, 0, 0);
-    onChange?.(d.toISOString().slice(0, 16));
+    onChange?.(toLocalString(d));
   }
 
   const displayDate = dateValue
