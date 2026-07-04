@@ -80,10 +80,97 @@ export async function createDay(input: CreateDayInput) {
   redirect(`/admin?created=${dayId}`);
 }
 
+export async function updateDay(id: string, input: CreateDayInput) {
+  const parsed = daySchema.safeParse(input);
+  if (!parsed.success) {
+    const fields = parsed.error.issues.map((i) => i.path.join(".")).join(", ");
+    throw new Error(`Invalid fields: ${fields}`);
+  }
+
+  const publishAt = new Date(parsed.data.publishAt);
+  const expiresAt = new Date(publishAt.getTime() + parsed.data.graceHours * 60 * 60 * 1000);
+
+  await db.transaction(async (tx) => {
+    await tx
+      .update(days)
+      .set({
+        topicId: parsed.data.topicId,
+        dayNumber: parsed.data.dayNumber,
+        slug: parsed.data.slug,
+        title: parsed.data.title,
+        videoUrls: parsed.data.videoUrls,
+        intro: parsed.data.intro,
+        objectives: parsed.data.objectives,
+        summary: parsed.data.summary,
+        notes: parsed.data.notes,
+        publishAt,
+        expiresAt,
+      })
+      .where(eq(days.id, id));
+
+    await tx.delete(quizQuestions).where(eq(quizQuestions.dayId, id));
+    await tx.delete(quizTasks).where(eq(quizTasks.dayId, id));
+
+    await tx.insert(quizQuestions).values(
+      parsed.data.questions.map((q, i) => ({
+        dayId: id,
+        sortOrder: i,
+        prompt: q.prompt,
+        choices: q.choices,
+        correctIndex: q.correctIndex,
+      })),
+    );
+
+    if (parsed.data.task) {
+      await tx.insert(quizTasks).values({ dayId: id, prompt: parsed.data.task });
+    }
+  });
+
+  redirect("/admin");
+}
+
 export async function listTopics() {
   return db.query.topics.findMany({ orderBy: topics.sortOrder });
 }
 
 export async function listDays() {
   return db.query.days.findMany({ orderBy: days.publishAt });
+}
+
+export async function getDay(id: string) {
+  return db.query.days.findFirst({ where: eq(days.id, id) });
+}
+
+export async function getDayQuestions(dayId: string) {
+  return db.query.quizQuestions.findMany({ where: eq(quizQuestions.dayId, dayId) });
+}
+
+export async function deleteTopic(formData: FormData) {
+  const id = formData.get("id") as string;
+  if (!id) return;
+  await db.delete(topics).where(eq(topics.id, id));
+  redirect("/admin");
+}
+
+export async function deleteDay(formData: FormData) {
+  const id = formData.get("id") as string;
+  if (!id) return;
+
+  const day = await db.query.days.findFirst({ where: eq(days.id, id) });
+  if (!day) return;
+
+  const now = Date.now();
+  const twoHoursMs = 2 * 60 * 60 * 1000;
+  const isExpired = day.expiresAt.getTime() < now;
+  const isMoreThan2hBeforePublish = day.publishAt.getTime() - now > twoHoursMs;
+
+  if (!isExpired && !isMoreThan2hBeforePublish) return;
+
+  await db.transaction(async (tx) => {
+    await tx.delete(quizQuestions).where(eq(quizQuestions.dayId, id));
+    await tx.delete(quizTasks).where(eq(quizTasks.dayId, id));
+    await tx.delete(days).where(eq(days.id, id));
+  });
+
+  redirect("/admin");
 }

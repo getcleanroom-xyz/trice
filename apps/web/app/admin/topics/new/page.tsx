@@ -14,7 +14,7 @@ export default function NewTopicPage() {
   const [state, formAction, pending] = useActionState(createTopic, initialState);
 
   return (
-    <main className="mx-auto max-w-lg px-6 py-12">
+    <main className="mx-auto max-w-lg px-4 sm:px-6 py-8 sm:py-12">
       <span className="mb-8 block font-serif text-lg italic">
         <Link href="/" className="hover:text-primary">Trice</Link>{" "}
         / <Link href="/admin" className="hover:text-primary">admin</Link>{" "}
