@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Minus, Maximize2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DragHandle } from "@/components/drag-handle";
+import { Markdown } from "@/components/ui/markdown";
 
 // Minimize/tab-switch behavior. Drag position and resize are handled one
 // layer up, by DayLayout (react-grid-layout) — this component doesn't need
@@ -53,15 +54,15 @@ export function InfoTabs({
       </div>
       {!minimized && (
         <div className="p-4 text-[13px] leading-relaxed text-muted-foreground">
-          {tab === "intro" && <p>{intro}</p>}
+          {tab === "intro" && <Markdown>{intro}</Markdown>}
           {tab === "objectives" && (
             <ul className="list-inside list-disc space-y-1">
               {objectives.map((o, i) => (
-                <li key={i}>{o}</li>
+                <li key={i}><Markdown>{o}</Markdown></li>
               ))}
             </ul>
           )}
-          {tab === "summary" && <p>{summary}</p>}
+          {tab === "summary" && <Markdown>{summary}</Markdown>}
         </div>
       )}
     </div>

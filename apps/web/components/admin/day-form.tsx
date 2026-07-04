@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { RadioInput } from "@/components/ui/radio";
+import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { cn } from "@/lib/utils";
 
 const questionSchema = z.object({
@@ -253,10 +254,16 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
       <div className="grid grid-cols-2 gap-4">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="publishAt">publishes at</Label>
-          <Input
-            type="datetime-local"
-            {...register("publishAt")}
-            className="[&::-webkit-calendar-picker-indicator]:invert [&::-webkit-calendar-picker-indicator]:opacity-60 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+          <Controller
+            control={control}
+            name="publishAt"
+            render={({ field }) => (
+              <DateTimePicker
+                value={field.value}
+                onChange={field.onChange}
+                placeholder="Select date and time..."
+              />
+            )}
           />
           {errors.publishAt && <p className={fieldErrorClass}>{errors.publishAt.message}</p>}
         </div>
