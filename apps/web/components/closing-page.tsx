@@ -25,9 +25,9 @@ export function ClosingPage({
 
   if (result) {
     return (
-      <div className="h-full rounded-sm border border-border bg-card p-6 text-center overflow-hidden">
-        <Check aria-hidden className="mx-auto mb-3 h-5 w-5 text-primary" />
-        <p className="font-serif text-base text-foreground">
+      <div className="flex h-full flex-col items-center justify-center p-6 text-center">
+        <Check aria-hidden className="mb-4 h-6 w-6 text-primary" />
+        <p className="font-serif text-lg text-foreground">
           {result.score} of {result.total} — see you tomorrow.
         </p>
       </div>
@@ -36,14 +36,14 @@ export function ClosingPage({
 
   if (!started) {
     return (
-      <div className="h-full rounded-sm border border-border bg-card p-6 text-center overflow-hidden">
-        <p className="mb-2 font-mono text-[10px] tracking-wide text-primary">
+      <div className="flex h-full flex-col items-center justify-center p-6 text-center">
+        <p className="mb-1 font-mono text-[10px] tracking-widest text-primary/70 uppercase">
           the closing page
         </p>
-        <p className="mb-4 font-serif text-base text-foreground">
-          {questions.length} questions. Five minutes.
+        <p className="mb-5 font-serif text-lg text-foreground">
+          {questions.length} question{questions.length !== 1 && "s"}. Five minutes.
         </p>
-        <Button onClick={() => setStarted(true)}>Begin</Button>
+        <Button onClick={() => setStarted(true)} variant="secondary">Begin</Button>
       </div>
     );
   }
@@ -67,28 +67,28 @@ export function ClosingPage({
   }
 
   return (
-    <div className="h-full rounded-sm border border-border bg-card p-6 overflow-hidden">
-      <div className="mb-5 flex justify-center gap-1.5">
+    <div className="flex flex-col h-full p-5">
+      <div className="flex justify-center gap-1.5 mb-4">
         {questions.map((_, i) => (
           <span
             key={i}
             className={cn(
-              "h-1.5 w-1.5 rounded-full",
+              "h-1.5 w-1.5 rounded-full transition-colors",
               i <= step ? "bg-primary" : "bg-secondary",
             )}
           />
         ))}
       </div>
-      <p className="mb-4 text-center font-serif text-base text-foreground">
+      <p className="mb-4 text-center font-serif text-base text-foreground leading-snug">
         {question.prompt}
       </p>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2 mt-auto">
         {question.choices.map((choice, i) => (
           <button
             key={i}
             disabled={pending}
             onClick={() => choose(i)}
-            className="rounded-sm border border-border px-4 py-2.5 text-left text-sm text-foreground hover:border-primary disabled:opacity-50"
+            className="rounded-lg border border-border px-4 py-3 text-left text-sm text-foreground hover:border-primary/60 hover:bg-primary/5 transition-colors disabled:opacity-50"
           >
             {choice}
           </button>

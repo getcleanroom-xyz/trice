@@ -1,9 +1,9 @@
 export function VideoPanel({ title, videoUrls }: { title: string; videoUrls: string[] }) {
   return (
-    <div className="flex h-full flex-col rounded-sm border border-border bg-card p-3 overflow-hidden">
+    <div className="flex h-full flex-col p-4 gap-3">
       <div className="flex flex-1 flex-col gap-3 min-h-0">
         {videoUrls.map((url, i) => (
-          <div key={i} className="relative aspect-video rounded-sm bg-background overflow-hidden">
+          <div key={i} className="relative aspect-video rounded-lg bg-background overflow-hidden">
             <iframe
               src={url}
               title={`${title} — video ${i + 1}`}
@@ -14,7 +14,7 @@ export function VideoPanel({ title, videoUrls }: { title: string; videoUrls: str
           </div>
         ))}
       </div>
-      <h1 className="mt-3 font-serif text-base text-foreground truncate">{title}</h1>
+      <h2 className="font-serif text-lg text-foreground leading-snug">{title}</h2>
     </div>
   );
 }
