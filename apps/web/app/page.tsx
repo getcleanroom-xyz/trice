@@ -46,7 +46,7 @@ export default async function HomePage() {
           <h2 className="mb-5 sm:mb-7 font-serif text-xl sm:text-2xl text-foreground">{topic.title}</h2>
           <div className="flex flex-col sm:flex-row gap-5 sm:gap-7">
             <div className="w-full sm:w-70 shrink-0 -rotate-1 rounded-sm border border-border bg-secondary p-4">
-              <StampBadge expiresAt={openDay.expiresAt} className="mb-3" />
+              <StampBadge publishAt={openDay.publishAt} expiresAt={openDay.expiresAt} className="mb-3" />
               <div className="mb-3 aspect-video rounded-sm bg-background" />
               <p className="mb-1 font-mono text-[10px] text-muted-foreground">
                 day {openDay.dayNumber}

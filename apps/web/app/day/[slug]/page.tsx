@@ -46,7 +46,7 @@ export default async function DayPage({
     <main className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
       <header className="mb-4 flex items-center justify-between">
         <Link href="/" className="font-serif text-lg italic text-foreground hover:text-primary transition-colors">Trice</Link>
-        <StampBadge expiresAt={day.expiresAt} />
+        <StampBadge publishAt={day.publishAt} expiresAt={day.expiresAt} />
       </header>
       <p className="mb-4 font-mono text-[11px] text-muted-foreground">
         day {day.dayNumber}
