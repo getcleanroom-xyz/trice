@@ -59,7 +59,7 @@ export function DailyContent({
       .catch(() => {});
   }, [dayId, subscriberId]);
 
-  const { registerVideo, completed, watchSeconds } = useVideoTracker({
+  const { completed, watchSeconds } = useVideoTracker({
     subscriberId,
     dayId,
     targetSeconds: totalTarget,
