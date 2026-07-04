@@ -6,10 +6,6 @@ import { cn } from "@/lib/utils";
 import { DragHandle } from "@/components/drag-handle";
 import { Markdown } from "@/components/ui/markdown";
 
-// Minimize/tab-switch behavior. Drag position and resize are handled one
-// layer up, by DayLayout (react-grid-layout) — this component doesn't need
-// to know about that at all, it just needs to render sensibly at whatever
-// size the grid gives it.
 export function InfoTabs({
   intro,
   objectives,
@@ -29,7 +25,7 @@ export function InfoTabs({
   ];
 
   return (
-    <div className="h-full rounded-sm border border-border bg-card">
+    <div className="rounded-sm border border-border bg-card overflow-hidden">
       <DragHandle />
       <div className="flex items-center border-b border-border">
         {tabs.map((t) => (
@@ -53,7 +49,7 @@ export function InfoTabs({
         </button>
       </div>
       {!minimized && (
-        <div className="p-4 text-[13px] leading-relaxed text-muted-foreground">
+        <div className="p-4 text-[13px] leading-relaxed text-muted-foreground max-h-64 overflow-hidden">
           {tab === "intro" && <Markdown>{intro}</Markdown>}
           {tab === "objectives" && (
             <ul className="list-inside list-disc space-y-1">

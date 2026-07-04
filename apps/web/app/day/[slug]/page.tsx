@@ -43,12 +43,12 @@ export default async function DayPage({
   });
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-10">
-      <div className="mb-2 flex items-center justify-between">
+    <main className="mx-auto max-w-4xl px-4 sm:px-6 py-6 sm:py-10">
+      <div className="mb-4 flex items-center justify-between">
         <Link href="/" className="font-serif text-lg italic text-foreground hover:text-primary">Trice</Link>
         <StampBadge expiresAt={day.expiresAt} />
       </div>
-      <p className="mb-6 font-mono text-[11px] text-muted-foreground">
+      <p className="mb-4 font-mono text-[11px] text-muted-foreground">
         day {day.dayNumber}
         {isAdmin && <span className="ml-2 text-primary">(admin preview)</span>}
       </p>

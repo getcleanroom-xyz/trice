@@ -26,7 +26,7 @@ export function ClosingPage({
 
   if (result) {
     return (
-      <div className="h-full rounded-sm border border-border bg-card p-6 text-center">
+      <div className="h-full rounded-sm border border-border bg-card p-6 text-center overflow-hidden">
         <DragHandle />
         <Check aria-hidden className="mx-auto mb-3 h-5 w-5 text-primary" />
         <p className="font-serif text-base text-foreground">
@@ -38,7 +38,7 @@ export function ClosingPage({
 
   if (!started) {
     return (
-      <div className="h-full rounded-sm border border-border bg-card p-6 text-center">
+      <div className="h-full rounded-sm border border-border bg-card p-6 text-center overflow-hidden">
         <DragHandle />
         <p className="mb-2 font-mono text-[10px] tracking-wide text-primary">
           the closing page
@@ -70,7 +70,7 @@ export function ClosingPage({
   }
 
   return (
-    <div className="h-full rounded-sm border border-border bg-card p-6">
+    <div className="h-full rounded-sm border border-border bg-card p-6 overflow-hidden">
       <DragHandle />
       <div className="mb-5 flex justify-center gap-1.5">
         {questions.map((_, i) => (
