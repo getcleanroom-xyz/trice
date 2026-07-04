@@ -1,9 +1,11 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { db } from "@/lib/db/client";
 import { days, quizQuestions } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { validateMagicLink } from "@/lib/auth/magic-link";
+import { verifyAdminSessionCookie, ADMIN_COOKIE_NAME } from "@/lib/admin/session";
 import { StampBadge } from "@/components/stamp-badge";
 import { DailyContent } from "@/components/daily-content";
 
@@ -20,13 +22,20 @@ export default async function DayPage({
   const day = await db.query.days.findFirst({ where: eq(days.slug, slug) });
   if (!day) notFound();
 
-  // Filed away for good once expired — the whole point of the mechanic —
-  // even for someone holding a technically-valid link.
   if (day.expiresAt.getTime() < Date.now()) notFound();
 
-  if (!token) redirect("/sign-in");
-  const session = await validateMagicLink(token);
-  if (!session || session.dayId !== day.id) redirect("/sign-in");
+  const cookieStore = await cookies();
+  const isAdmin = verifyAdminSessionCookie(cookieStore.get(ADMIN_COOKIE_NAME)?.value);
+
+  let subscriberId: string;
+  if (isAdmin) {
+    subscriberId = "admin";
+  } else {
+    if (!token) redirect("/sign-in");
+    const session = await validateMagicLink(token);
+    if (!session || session.dayId !== day.id) redirect("/sign-in");
+    subscriberId = session.subscriber.id;
+  }
 
   const questions = await db.query.quizQuestions.findMany({
     where: eq(quizQuestions.dayId, day.id),
@@ -41,6 +50,7 @@ export default async function DayPage({
       </div>
       <p className="mb-6 font-mono text-[11px] text-muted-foreground">
         day {day.dayNumber}
+        {isAdmin && <span className="ml-2 text-primary">(admin preview)</span>}
       </p>
 
       <DailyContent
@@ -50,7 +60,7 @@ export default async function DayPage({
         intro={day.intro}
         objectives={day.objectives}
         summary={day.summary}
-        subscriberId={session.subscriber.id}
+        subscriberId={subscriberId}
         dayId={day.id}
         questions={questions.map((q) => ({
           id: q.id,
