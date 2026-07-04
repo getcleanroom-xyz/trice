@@ -30,17 +30,17 @@ export default function TipPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-6 text-center">
+    <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-4 sm:px-6 text-center">
       <Link href="/" className="mb-10 font-serif text-lg italic text-foreground hover:text-primary">Trice</Link>
-      <h1 className="mb-2 font-serif text-2xl text-foreground">
-        Buy tomorrow's card a coffee
+      <h1 className="mb-2 font-serif text-xl sm:text-2xl text-foreground">
+        Buy tomorrow&rsquo;s card a coffee
       </h1>
       <p className="mb-7 max-w-xs text-[13px] leading-relaxed text-muted-foreground">
-        Trice stays free, no paywall, ever. If a day's card was worth more than
+        Trice stays free, no paywall, ever. If a day&rsquo;s card was worth more than
         fifteen minutes, this is where that goes.
       </p>
 
-      <div className="mb-4 flex gap-2.5">
+      <div className="mb-4 flex flex-wrap justify-center gap-2 sm:gap-2.5">
         {AMOUNTS_NGN.map((n) => (
           <button
             key={n}
@@ -55,14 +55,15 @@ export default function TipPage() {
         ))}
       </div>
 
-      <div className="flex gap-2.5">
-        <Button disabled={pending !== null} onClick={() => tip("fiat")}>
+      <div className="flex flex-col sm:flex-row gap-2.5 w-full sm:w-auto">
+        <Button disabled={pending !== null} onClick={() => tip("fiat")} className="w-full sm:w-auto">
           {pending === "fiat" ? "One moment…" : "Pay with card / bank"}
         </Button>
         <Button
           variant="secondary"
           disabled={pending !== null}
           onClick={() => tip("crypto")}
+          className="w-full sm:w-auto"
         >
           {pending === "crypto" ? "One moment…" : "Pay with crypto"}
         </Button>

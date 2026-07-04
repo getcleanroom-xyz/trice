@@ -21,16 +21,16 @@ export function SignupForm() {
   }
 
   return (
-    <form action={formAction} className="max-w-sm">
-      <div className="flex">
+    <form action={formAction} className="w-full max-w-sm">
+      <div className="flex flex-col sm:flex-row gap-2">
         <Input
           type="email"
           name="email"
           placeholder="name@company.com"
           required
-          className="rounded-r-none border-r-0"
+          className="sm:rounded-r-none sm:border-r-0"
         />
-        <Button type="submit" disabled={pending} className="rounded-l-none whitespace-nowrap">
+        <Button type="submit" disabled={pending} className="sm:rounded-l-none whitespace-nowrap">
           {pending ? "Joining…" : "Join the roll"}
         </Button>
       </div>

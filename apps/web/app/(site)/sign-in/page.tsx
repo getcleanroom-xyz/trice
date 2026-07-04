@@ -12,7 +12,7 @@ export default function SignInPage() {
   const [state, formAction, pending] = useActionState(requestLink, initialState);
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-6 text-center">
+    <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-4 sm:px-6 text-center">
       <Link href="/" className="mb-11 font-serif text-lg italic text-foreground hover:text-primary">Trice</Link>
 
       {state.ok ? (
