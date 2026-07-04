@@ -32,6 +32,7 @@ const formSchema = z.object({
   slug: z.string().min(1).regex(/^[a-z0-9-]+$/, "lowercase letters, numbers, hyphens only"),
   title: z.string().min(1, "Enter a title"),
   videoUrls: z.array(z.object({ url: z.string().url("Enter a valid URL") })).min(1, "Add at least one video"),
+  videoDurations: z.array(z.number().min(1)),
   intro: z.string().min(1, "Write an intro"),
   objectives: z.array(z.object({ value: z.string().min(1) })).min(1),
   summary: z.string().min(1, "Write a summary"),
