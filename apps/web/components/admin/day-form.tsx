@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useTransition, useRef } from "react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -82,22 +82,22 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
     handleSubmit,
     watch,
     setValue,
-    getValues,
     formState: { errors },
   } = form;
 
   const watchedTitle = watch("title");
+  const slugTouchedRef = useRef(false);
 
   useEffect(() => {
-    const currentSlug = getValues("slug");
-    if (!currentSlug && watchedTitle) {
+    if (slugTouchedRef.current) return;
+    if (watchedTitle) {
       const generated = watchedTitle
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-+|-+$/g, "");
       setValue("slug", generated, { shouldValidate: false });
     }
-  }, [watchedTitle, getValues, setValue]);
+  }, [watchedTitle, setValue]);
 
   const objectivesArray = useFieldArray<FormValues, "objectives">({ control, name: "objectives" });
   const questionsArray = useFieldArray<FormValues, "questions">({ control, name: "questions" });
@@ -158,7 +158,11 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
 
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="slug">slug (used in the URL)</Label>
-        <Input {...register("slug")} placeholder="binary-search-revisited" />
+        <Input
+          {...register("slug")}
+          placeholder="binary-search-revisited"
+          onInput={() => { slugTouchedRef.current = true; }}
+        />
         {errors.slug && <p className={fieldErrorClass}>{errors.slug.message}</p>}
       </div>
 
