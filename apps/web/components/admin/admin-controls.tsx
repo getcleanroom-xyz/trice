@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 
 function SearchInput({ placeholder, param }: { placeholder?: string; param: string }) {
   const router = useRouter();
@@ -45,15 +46,16 @@ function SortSelect({ param, options }: { param: string; options: { value: strin
   }
 
   return (
-    <select
-      value={current}
-      onChange={(e) => handleChange(e.target.value)}
-      className="h-9 rounded-sm border border-border bg-transparent px-2 text-xs text-foreground font-mono focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-    >
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>{o.label}</option>
-      ))}
-    </select>
+    <Select value={current} onValueChange={handleChange}>
+      <SelectTrigger className="h-9 w-28 text-xs">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((o) => (
+          <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 
@@ -99,7 +101,7 @@ function Pagination({ page, totalPages, param }: { page: number; totalPages: num
   );
 }
 
-function Tabs({ activeTab }: { activeTab: "topics" | "days" }) {
+function AdminTabs({ activeTab }: { activeTab: "topics" | "days" }) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -115,13 +117,13 @@ function Tabs({ activeTab }: { activeTab: "topics" | "days" }) {
     <div className="flex gap-1 border-b border-border mb-4">
       <button
         onClick={() => switchTab("topics")}
-        className={`px-4 py-2 text-xs font-mono border-b-2 transition-colors ${activeTab ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}
+        className={`px-4 py-2 text-xs font-mono border-b-2 transition-colors ${activeTab === "topics" ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}
       >
         Topics
       </button>
       <button
         onClick={() => switchTab("days")}
-        className={`px-4 py-2 text-xs font-mono border-b-2 transition-colors ${!activeTab ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}
+        className={`px-4 py-2 text-xs font-mono border-b-2 transition-colors ${activeTab === "days" ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}
       >
         Days
       </button>
@@ -129,4 +131,4 @@ function Tabs({ activeTab }: { activeTab: "topics" | "days" }) {
   );
 }
 
-export { SearchInput, SortSelect, Pagination, Tabs };
+export { SearchInput, SortSelect, Pagination, Tabs, AdminTabs };

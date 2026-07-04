@@ -38,14 +38,12 @@ function canDelete(status: Status, publishAt: Date): boolean {
 }
 
 export function AdminDayList({
-  days, total, page, totalPages, q, sort, activeTab,
+  days, total, page, totalPages, q, sort,
 }: {
-  days: Day[]; total: number; page: number; totalPages: number; q?: string; sort?: string; activeTab: boolean;
+  days: Day[]; total: number; page: number; totalPages: number; q?: string; sort?: string;
 }) {
   const [showConfirm, setShowConfirm] = useState<string | null>(null);
   const now = Date.now();
-
-  if (!activeTab) return null;
 
   return (
     <section>

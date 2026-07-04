@@ -9,13 +9,11 @@ import { deleteTopic, topicHasDays } from "@/app/admin/content-actions";
 type Topic = { id: string; title: string; description: string; sortOrder: number };
 
 export function AdminTopicList({
-  topics, total, page, totalPages, q, activeTab,
+  topics, total, page, totalPages, q,
 }: {
-  topics: Topic[]; total: number; page: number; totalPages: number; q?: string; activeTab: boolean;
+  topics: Topic[]; total: number; page: number; totalPages: number; q?: string;
 }) {
   const [showConfirm, setShowConfirm] = useState<string | null>(null);
-
-  if (!activeTab) return null;
 
   return (
     <section>
