@@ -47,7 +47,24 @@ export default async function HomePage() {
           <div className="flex flex-col sm:flex-row gap-5 sm:gap-7">
             <div className="w-full sm:w-70 shrink-0 -rotate-1 rounded-sm border border-border bg-secondary p-4">
               <StampBadge publishAt={openDay.publishAt} expiresAt={openDay.expiresAt} className="mb-3" />
-              <div className="mb-3 aspect-video rounded-sm bg-background" />
+              <div className="mb-3 aspect-video rounded-sm bg-background overflow-hidden">
+                {(() => {
+                  const urls = (openDay.videoUrls as string[]) ?? [];
+                  const first = urls[0];
+                  if (!first) return null;
+                  const thumbMatch = first.match(/(?:youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/watch\?v=)([a-zA-Z0-9_-]{11})/);
+                  return thumbMatch ? (
+                    <img
+                      src={`https://img.youtube.com/vi/${thumbMatch[1]}/mqdefault.jpg`}
+                      alt={openDay.title}
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-[10px] text-muted-foreground">video</div>
+                  );
+                })()}
+              </div>
               <p className="mb-1 font-mono text-[10px] text-muted-foreground">
                 day {openDay.dayNumber}
               </p>
