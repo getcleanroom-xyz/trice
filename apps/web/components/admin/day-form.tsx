@@ -82,21 +82,22 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
     handleSubmit,
     watch,
     setValue,
+    getValues,
     formState: { errors },
   } = form;
 
   const watchedTitle = watch("title");
-  const watchedSlug = watch("slug");
 
   useEffect(() => {
-    if (!watchedSlug && watchedTitle) {
+    const currentSlug = getValues("slug");
+    if (!currentSlug && watchedTitle) {
       const generated = watchedTitle
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/^-+|-+$/g, "");
-      setValue("slug", generated);
+      setValue("slug", generated, { shouldValidate: false });
     }
-  }, [watchedTitle, watchedSlug, setValue]);
+  }, [watchedTitle, getValues, setValue]);
 
   const objectivesArray = useFieldArray<FormValues, "objectives">({ control, name: "objectives" });
   const questionsArray = useFieldArray<FormValues, "questions">({ control, name: "questions" });
@@ -274,8 +275,9 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
               type="button"
               onClick={() =>
                 questionsArray.update(qi, {
-                  ...field,
+                  prompt: field.prompt,
                   choices: [...field.choices, ""],
+                  correctIndex: field.correctIndex,
                 })
               }
               className="flex items-center gap-1 font-mono text-[11px] text-primary"
