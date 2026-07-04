@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/toast";
@@ -47,6 +48,7 @@ interface FormValues {
   slug: string;
   title: string;
   videoUrls: { url: string }[];
+  videoDurations: number[];
   intro: string;
   objectives: { value: string }[];
   summary: string;
@@ -95,6 +97,7 @@ export function DayForm({ topics, dayData, dayId }: { topics: { id: string; titl
       slug: source?.slug ?? "",
       title: source?.title ?? "",
       videoUrls: source?.videoUrls ?? [],
+      videoDurations: source?.videoDurations ?? [],
       intro: source?.intro ?? "",
       objectives: source?.objectives ?? [],
       summary: source?.summary ?? "",
@@ -174,6 +177,7 @@ export function DayForm({ topics, dayData, dayId }: { topics: { id: string; titl
           ...values,
           objectives: values.objectives.map((o) => o.value),
           videoUrls: values.videoUrls.map((v) => v.url),
+          videoDurations: values.videoDurations ?? [],
         };
         if (dayId) {
           await updateDay(dayId, flat);
@@ -290,18 +294,44 @@ export function DayForm({ topics, dayData, dayId }: { topics: { id: string; titl
             <div className="flex flex-col gap-5">
               <div className="flex flex-col gap-1.5">
                 <Label>video URLs (embed links)</Label>
-                {videoUrlsArray.fields.map((field, i) => (
-                  <div key={field.id} className="flex gap-2">
-                    <Input {...register(`videoUrls.${i}.url`)} placeholder="https://www.youtube.com/embed/..." />
-                    {videoUrlsArray.fields.length > 1 && (
-                      <button type="button" onClick={() => videoUrlsArray.remove(i)} className="text-muted-foreground" aria-label="Remove video">
-                        <X className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-                ))}
+                {videoUrlsArray.fields.map((field, i) => {
+                  const duration = allValues.videoDurations?.[i] ?? 10;
+                  return (
+                    <div key={field.id} className="rounded-sm border border-border p-3 space-y-2">
+                      <div className="flex gap-2">
+                        <Input {...register(`videoUrls.${i}.url`)} placeholder="https://www.youtube.com/embed/..." />
+                        {videoUrlsArray.fields.length > 1 && (
+                          <button type="button" onClick={() => videoUrlsArray.remove(i)} className="text-muted-foreground" aria-label="Remove video">
+                            <X className="h-4 w-4" />
+                          </button>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="font-mono text-[10px] text-muted-foreground whitespace-nowrap">goal</span>
+                        <Slider
+                          value={[duration]}
+                          onValueChange={(v) => {
+                            const durations = [...(allValues.videoDurations ?? [])];
+                            durations[i] = v[0];
+                            setValue("videoDurations", durations, { shouldValidate: false });
+                          }}
+                          min={1}
+                          max={30}
+                          step={1}
+                          className="flex-1"
+                        />
+                        <span className="font-mono text-xs text-foreground w-12 text-right">{duration} min</span>
+                      </div>
+                    </div>
+                  );
+                })}
                 {errors.videoUrls && <p className={fieldErrorClass}>{errors.videoUrls.message}</p>}
-                <button type="button" onClick={() => videoUrlsArray.append({ url: "" })} className="flex items-center gap-1 self-start font-mono text-[11px] text-primary">
+                <button type="button" onClick={() => {
+                  videoUrlsArray.append({ url: "" });
+                  const durations = [...(allValues.videoDurations ?? [])];
+                  durations.push(10);
+                  setValue("videoDurations", durations, { shouldValidate: false });
+                }} className="flex items-center gap-1 self-start font-mono text-[11px] text-primary">
                   <Plus className="h-3 w-3" /> add video
                 </button>
               </div>

@@ -47,6 +47,7 @@ export const days = pgTable("days", {
   slug: text("slug").notNull(),
   title: text("title").notNull(),
   videoUrls: jsonb("video_urls").$type<string[]>().notNull(),
+  videoDurations: jsonb("video_durations").$type<number[]>().default([]).notNull(),
   intro: text("intro").notNull(),
   objectives: jsonb("objectives").$type<string[]>().notNull(),
   summary: text("summary").notNull(),
@@ -147,10 +148,24 @@ export const payments = pgTable("payments", {
 export const emailSends = pgTable("email_sends", {
   id: uuid("id").primaryKey().defaultRandom(),
   subscriberId: uuid("subscriber_id").notNull().references(() => subscribers.id),
-  dayId: uuid("day_id").references(() => days.id), // null for the welcome email
+  dayId: uuid("day_id").references(() => days.id),
   kind: text("kind", { enum: ["confirmation", "daily_drop"] }).notNull(),
   status: text("status", { enum: ["queued", "sent", "failed"] })
     .default("queued")
     .notNull(),
   sentAt: timestamp("sent_at", { withTimezone: true }),
 });
+
+export const learningProgress = pgTable("learning_progress", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  subscriberId: uuid("subscriber_id").notNull().references(() => subscribers.id),
+  dayId: uuid("day_id").notNull().references(() => days.id),
+  totalWatchSeconds: integer("total_watch_seconds").notNull().default(0),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+}, (t) => ({
+  subscriberDayIdx: uniqueIndex("learning_progress_subscriber_day_idx").on(
+    t.subscriberId,
+    t.dayId,
+  ),
+}));
