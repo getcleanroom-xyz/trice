@@ -83,6 +83,7 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
     handleSubmit,
     watch,
     setValue,
+    getValues,
     formState: { errors },
   } = form;
 
@@ -304,7 +305,7 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
                 <RadioInput
                   {...register(`questions.${qi}.correctIndex`, { valueAsNumber: true })}
                   value={ci}
-                  defaultChecked={field.correctIndex === ci}
+                  defaultChecked={getValues(`questions.${qi}.correctIndex`) === ci}
                   aria-label={`Choice ${ci + 1} is correct`}
                 />
                 <Input
@@ -318,13 +319,13 @@ export function DayForm({ topics }: { topics: { id: string; title: string }[] })
             )}
             <button
               type="button"
-              onClick={() =>
+              onClick={() => {
+                const q = getValues(`questions.${qi}`);
                 questionsArray.update(qi, {
-                  prompt: field.prompt,
-                  choices: [...field.choices, ""],
-                  correctIndex: field.correctIndex,
-                })
-              }
+                  ...q,
+                  choices: [...q.choices, ""],
+                });
+              }}
               className="flex items-center gap-1 font-mono text-[11px] text-primary"
             >
               <Plus className="h-3 w-3" /> add choice
