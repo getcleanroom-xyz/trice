@@ -26,11 +26,13 @@ export const dailyDropCron = new Elysia()
       async run() {
         try {
           const now = new Date();
-
           const liveDays = await db
             .select({ id: days.id })
             .from(days)
             .where(and(lte(days.publishAt, now), gte(days.expiresAt, now)));
+
+          console.log(`[on-time-delivery] ${liveDays.length} live day(s) at ${now.toISOString()}`);
+          if (liveDays.length === 0) return;
 
           for (const day of liveDays) {
             const missing = await db

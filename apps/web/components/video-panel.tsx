@@ -1,6 +1,9 @@
+import { DragHandle } from "@/components/panel-handles";
+
 export function VideoPanel({ title, videoUrls }: { title: string; videoUrls: string[] }) {
   return (
     <div className="flex h-full flex-col rounded-lg border border-border bg-card group">
+      <DragHandle />
       <div className="flex flex-1 flex-col gap-3 p-4 min-h-0">
         {videoUrls.map((url, i) => (
           <div key={i} className="relative aspect-video rounded-lg bg-background overflow-hidden">

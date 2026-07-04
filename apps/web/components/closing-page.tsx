@@ -5,6 +5,7 @@ import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { submitQuiz } from "@/app/actions/submit-quiz";
 import { Button } from "@/components/ui/button";
+import { DragHandle } from "@/components/panel-handles";
 
 type Question = { id: string; prompt: string; choices: string[] };
 
@@ -26,6 +27,7 @@ export function ClosingPage({
   if (result) {
     return (
       <div className="flex h-full flex-col items-center justify-center p-6 text-center">
+        <DragHandle />
         <Check aria-hidden className="mb-4 h-6 w-6 text-primary" />
         <p className="font-serif text-lg text-foreground">
           {result.score} of {result.total} — see you tomorrow.
@@ -37,6 +39,7 @@ export function ClosingPage({
   if (!started) {
     return (
       <div className="flex h-full flex-col items-center justify-center p-6 text-center">
+        <DragHandle />
         <p className="mb-1 font-mono text-[10px] tracking-widest text-primary/70 uppercase">
           the closing page
         </p>
