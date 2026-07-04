@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { db } from "@/lib/db/client";
 import { topics, days, quizQuestions, quizTasks } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, or, like, desc, asc, sql, count } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
 const dayQuestionSchema = z.object({
@@ -129,12 +129,42 @@ export async function updateDay(id: string, input: CreateDayInput) {
   redirect("/admin");
 }
 
-export async function listTopics() {
-  return db.query.topics.findMany({ orderBy: topics.sortOrder });
+export async function listTopics(opts: { q?: string; page?: number; pageSize?: number } = {}) {
+  const { q, page = 1, pageSize = 20 } = opts;
+  const offset = (page - 1) * pageSize;
+
+  const conditions = q ? or(like(topics.title, `%${q}%`), like(topics.description, `%${q}%`)) : undefined;
+
+  const [data, [{ total }]] = await Promise.all([
+    db.query.topics.findMany({
+      where: conditions,
+      orderBy: topics.sortOrder,
+      limit: pageSize,
+      offset,
+    }),
+    db.select({ total: count() }).from(topics).where(conditions),
+  ]);
+
+  return { data, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
 }
 
-export async function listDays() {
-  return db.query.days.findMany({ orderBy: days.publishAt });
+export async function listDays(opts: { q?: string; sort?: string; page?: number; pageSize?: number } = {}) {
+  const { q, sort = "date", page = 1, pageSize = 20 } = opts;
+  const offset = (page - 1) * pageSize;
+
+  const conditions = q ? or(like(days.title, `%${q}%`), sql`cast(${days.dayNumber} as text) like ${"%" + q + "%"}`) : undefined;
+
+  const orderBy =
+    sort === "title" ? asc(days.title)
+    : sort === "status" ? desc(days.publishAt)
+    : desc(days.publishAt);
+
+  const [data, [{ total }]] = await Promise.all([
+    db.query.days.findMany({ where: conditions, orderBy, limit: pageSize, offset }),
+    db.select({ total: count() }).from(days).where(conditions),
+  ]);
+
+  return { data, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
 }
 
 export async function getDay(id: string) {
@@ -143,6 +173,22 @@ export async function getDay(id: string) {
 
 export async function getDayQuestions(dayId: string) {
   return db.query.quizQuestions.findMany({ where: eq(quizQuestions.dayId, dayId) });
+}
+
+export async function getTopic(id: string) {
+  return db.query.topics.findFirst({ where: eq(topics.id, id) });
+}
+
+export async function topicHasDays(topicId: string): Promise<boolean> {
+  const [{ total }] = await db.select({ total: count() }).from(days).where(eq(days.topicId, topicId));
+  return total > 0;
+}
+
+export async function updateTopic(id: string, input: { title: string; description: string; sortOrder: number }) {
+  const parsed = z.object({ title: z.string().min(1), description: z.string().min(1), sortOrder: z.number().int() }).safeParse(input);
+  if (!parsed.success) throw new Error("Invalid topic data");
+  await db.update(topics).set(parsed.data).where(eq(topics.id, id));
+  redirect("/admin");
 }
 
 export async function deleteTopic(formData: FormData) {

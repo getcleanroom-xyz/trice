@@ -1,14 +1,23 @@
 import Link from "next/link";
 import { listTopics, listDays } from "@/app/admin/content-actions";
 import { buttonVariants } from "@/components/ui/button";
-import { StatusBadge } from "@/components/admin/admin-ui";
 import { AdminDayList } from "@/components/admin/admin-day-list";
 import { AdminTopicList } from "@/components/admin/admin-topic-list";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminPage() {
-  const [topics, days] = await Promise.all([listTopics(), listDays()]);
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; sort?: string; page?: string; tab?: string }>;
+}) {
+  const { q, sort, page, tab } = await searchParams;
+  const pageNum = Math.max(1, Number(page) || 1);
+
+  const [topicsResult, daysResult] = await Promise.all([
+    listTopics({ q, page: tab === "days" ? 1 : pageNum }),
+    listDays({ q, sort, page: tab === "topics" ? 1 : pageNum }),
+  ]);
 
   return (
     <main className="mx-auto max-w-3xl px-4 sm:px-6 py-8 sm:py-12">
@@ -27,8 +36,8 @@ export default async function AdminPage() {
         </div>
       </div>
 
-      <AdminTopicList topics={topics} />
-      <AdminDayList days={days} topics={topics} />
+      <AdminTopicList topics={topicsResult.data} total={topicsResult.total} page={topicsResult.page} totalPages={topicsResult.totalPages} q={q} activeTab={tab !== "days"} />
+      <AdminDayList days={daysResult.data} total={daysResult.total} page={daysResult.page} totalPages={daysResult.totalPages} q={q} sort={sort} activeTab={tab !== "topics"} />
     </main>
   );
 }
