@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Minus, Maximize2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { DragHandle } from "@/components/drag-handle";
 import { Markdown } from "@/components/ui/markdown";
 
 export function InfoTabs({
@@ -26,7 +25,6 @@ export function InfoTabs({
 
   return (
     <div className="rounded-sm border border-border bg-card overflow-hidden">
-      <DragHandle />
       <div className="flex items-center border-b border-border">
         {tabs.map((t) => (
           <button
