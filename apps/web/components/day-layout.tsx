@@ -12,6 +12,13 @@ const DESKTOP_LAYOUT: Layout = [
   { i: "quiz", x: 0, y: 17, w: 12, h: 8, minW: 6, minH: 4 },
 ];
 
+const MOBILE_LAYOUT: Layout = [
+  { i: "video", x: 0, y: 0, w: 12, h: 8 },
+  { i: "tabs", x: 0, y: 8, w: 12, h: 7 },
+  { i: "notes", x: 0, y: 15, w: 12, h: 5 },
+  { i: "quiz", x: 0, y: 20, w: 12, h: 8 },
+];
+
 function loadLayout(): Layout {
   if (typeof window === "undefined") return DESKTOP_LAYOUT;
   try {
@@ -39,41 +46,32 @@ export function DayLayout({ panels }: { panels: Record<string, React.ReactNode> 
     saveLayout(next);
   }, []);
 
-  if (!isDesktop) {
-    return (
-      <div ref={containerRef} className="flex flex-col gap-4">
-        {panels.video}
-        {panels.notes}
-        {panels.tabs}
-        {panels.quiz}
-      </div>
-    );
-  }
-
   return (
     <div ref={containerRef}>
-      <GridLayout
-        layout={layout}
-        width={width}
-        gridConfig={{ cols: 12, rowHeight: 28, margin: [12, 12] }}
-        dragConfig={{
-          enabled: true,
-          bounded: true,
-          handle: ".drag-handle",
-          threshold: 3,
-        }}
-        resizeConfig={{
-          enabled: true,
-          handles: ["se"],
-        }}
-        onLayoutChange={onLayoutChange}
-      >
-        {Object.entries(panels).map(([key, node]) => (
-          <div key={key} className="relative group">
-            {node}
-          </div>
-        ))}
-      </GridLayout>
+      {mounted && width > 0 && (
+        <GridLayout
+          layout={isDesktop ? layout : MOBILE_LAYOUT}
+          width={width}
+          gridConfig={{ cols: 12, rowHeight: 28, margin: [12, 12] }}
+          dragConfig={{
+            enabled: true,
+            bounded: true,
+            handle: ".drag-handle",
+            threshold: isDesktop ? 3 : 15,
+          }}
+          resizeConfig={{
+            enabled: isDesktop,
+            handles: ["se"],
+          }}
+          onLayoutChange={isDesktop ? onLayoutChange : undefined}
+        >
+          {Object.entries(panels).map(([key, node]) => (
+            <div key={key} className="relative group">
+              {node}
+            </div>
+          ))}
+        </GridLayout>
+      )}
     </div>
   );
 }
