@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db/client";
-import { days, quizQuestions } from "@/lib/db/schema";
+import { days, quizQuestions, quizTasks } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { validateMagicLink } from "@/lib/auth/magic-link";
 import { verifyAdminSessionCookie, ADMIN_COOKIE_NAME } from "@/lib/admin/session";
@@ -42,6 +42,10 @@ export default async function DayPage({
     orderBy: quizQuestions.sortOrder,
   });
 
+  const quizTask = await db.query.quizTasks.findFirst({
+    where: eq(quizTasks.dayId, day.id),
+  });
+
   return (
     <main className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
       <header className="mb-4 flex items-center justify-between">
@@ -68,7 +72,7 @@ export default async function DayPage({
           prompt: q.prompt,
           choices: q.choices,
         }))}
-        task={day.task as string | undefined}
+        task={quizTask?.prompt}
       />
     </main>
   );
