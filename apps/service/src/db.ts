@@ -43,6 +43,32 @@ export const magicLinks = pgTable("magic_links", {
   usedAt: timestamp("used_at", { withTimezone: true }),
 });
 
+export const insightTokens = pgTable("insight_tokens", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  subscriberId: uuid("subscriber_id").notNull(),
+  weekStart: timestamp("week_start", { withTimezone: true }).notNull(),
+  token: text("token").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+});
+
+export const quizAttempts = pgTable("quiz_attempts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  subscriberId: uuid("subscriber_id").notNull(),
+  dayId: uuid("day_id").notNull(),
+  answers: text("answers").notNull(),
+  score: integer("score").notNull(),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+});
+
+export const learningProgress = pgTable("learning_progress", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  subscriberId: uuid("subscriber_id").notNull(),
+  dayId: uuid("day_id").notNull(),
+  totalWatchSeconds: integer("total_watch_seconds").notNull().default(0),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+});
+
 let _db: PostgresJsDatabase | null = null;
 
 function getDb(): PostgresJsDatabase {

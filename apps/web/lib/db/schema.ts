@@ -169,3 +169,14 @@ export const learningProgress = pgTable("learning_progress", {
     t.dayId,
   ),
 }));
+
+export const insightTokens = pgTable("insight_tokens", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  subscriberId: uuid("subscriber_id").notNull().references(() => subscribers.id),
+  weekStart: timestamp("week_start", { withTimezone: true }).notNull(),
+  token: text("token").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+}, (t) => ({
+  tokenIdx: uniqueIndex("insight_tokens_token_idx").on(t.token),
+}));

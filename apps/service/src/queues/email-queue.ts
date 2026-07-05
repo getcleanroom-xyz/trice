@@ -15,9 +15,11 @@ export const connection: ConnectionOptions = {
 
 export type EmailJob = {
   emailSendId: string;
-  kind: "confirmation" | "daily_drop";
+  kind: "confirmation" | "daily_drop" | "weekly_insights";
   subscriberId: string;
   dayId?: string;
+  insightTokenId?: string;
+  weekStart?: string;
 };
 
 export const emailQueue = new Queue<EmailJob, void, "send">("email", { connection });
