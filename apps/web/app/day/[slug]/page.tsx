@@ -68,6 +68,7 @@ export default async function DayPage({
           prompt: q.prompt,
           choices: q.choices,
         }))}
+        task={day.task as string | undefined}
       />
     </main>
   );

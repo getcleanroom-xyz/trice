@@ -10,18 +10,21 @@ export function InfoTabs({
   intro,
   objectives,
   summary,
+  task,
 }: {
   intro: string;
   objectives: string[];
   summary: string;
+  task?: string;
 }) {
-  const [tab, setTab] = useState<"intro" | "objectives" | "summary">("intro");
+  const [tab, setTab] = useState<"intro" | "objectives" | "summary" | "task">("intro");
   const [minimized, setMinimized] = useState(false);
 
   const tabs = [
     { id: "intro" as const, label: "Intro" },
     { id: "objectives" as const, label: "Objectives" },
     { id: "summary" as const, label: "Summary" },
+    ...(task ? [{ id: "task" as const, label: "Task" }] : []),
   ];
 
   return (
@@ -62,6 +65,7 @@ export function InfoTabs({
               </ul>
             )}
             {tab === "summary" && <Markdown>{summary}</Markdown>}
+            {tab === "task" && task && <Markdown>{task}</Markdown>}
           </div>
         </div>
       )}

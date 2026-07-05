@@ -25,6 +25,7 @@ export function DailyContent({
   subscriberId,
   dayId,
   questions,
+  task,
 }: {
   title: string;
   videoUrls: string[];
@@ -36,6 +37,7 @@ export function DailyContent({
   subscriberId: string;
   dayId: string;
   questions: Question[];
+  task?: string;
 }) {
   const [showQuiz, setShowQuiz] = useState(false);
   const [learningGoalMet, setLearningGoalMet] = useState(false);
@@ -86,7 +88,7 @@ export function DailyContent({
           </div>
         ),
         notes: <NoteCard notes={notes} />,
-        tabs: <InfoTabs intro={intro} objectives={objectives} summary={summary} />,
+        tabs: <InfoTabs intro={intro} objectives={objectives} summary={summary} task={task} />,
         quiz: (
           showQuiz || learningGoalMet ? (
             <ClosingPage subscriberId={subscriberId} dayId={dayId} questions={questions} />
