@@ -1,7 +1,6 @@
 "use server";
 
 import { z } from "zod";
-import { eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { subscribers, emailSends } from "@/lib/db/schema";
 
@@ -18,17 +17,15 @@ export async function subscribe(
     return { ok: false, error: "That doesn't look like a valid email." };
   }
 
-  const existing = await db.query.subscribers.findFirst({
-    where: eq(subscribers.email, parsed.data.email),
-  });
-  if (existing) {
-    return { ok: true, alreadySubscribed: true };
-  }
-
   const [subscriber] = await db
     .insert(subscribers)
     .values({ email: parsed.data.email })
+    .onConflictDoNothing()
     .returning();
+
+  if (!subscriber) {
+    return { ok: true, alreadySubscribed: true };
+  }
 
   await db.insert(emailSends).values({
     subscriberId: subscriber.id,

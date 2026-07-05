@@ -13,10 +13,10 @@ const DESKTOP_LAYOUT: Layout = [
 ];
 
 const MOBILE_LAYOUT: Layout = [
-  { i: "video", x: 0, y: 0, w: 12, h: 8 },
-  { i: "tabs", x: 0, y: 8, w: 12, h: 7 },
-  { i: "notes", x: 0, y: 15, w: 12, h: 5 },
-  { i: "quiz", x: 0, y: 20, w: 12, h: 8 },
+  { i: "video", x: 0, y: 0, w: 12, h: 10 },
+  { i: "tabs", x: 0, y: 10, w: 12, h: 8 },
+  { i: "notes", x: 0, y: 18, w: 12, h: 6 },
+  { i: "quiz", x: 0, y: 24, w: 12, h: 12 },
 ];
 
 function loadLayout(): Layout {

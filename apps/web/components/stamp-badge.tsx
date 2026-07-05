@@ -1,6 +1,9 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
-export function StampBadge({
+function Badge({
   publishAt,
   expiresAt,
   className,
@@ -9,7 +12,13 @@ export function StampBadge({
   expiresAt: Date;
   className?: string;
 }) {
-  const now = Date.now();
+  const [now, setNow] = useState(Date.now);
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
   const isLive = publishAt ? publishAt.getTime() <= now && expiresAt.getTime() > now : expiresAt.getTime() > now;
   const isExpired = expiresAt.getTime() <= now;
 
@@ -45,3 +54,5 @@ export function StampBadge({
     </span>
   );
 }
+
+export { Badge as StampBadge };

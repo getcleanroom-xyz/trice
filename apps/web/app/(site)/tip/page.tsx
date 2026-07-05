@@ -14,19 +14,28 @@ const AMOUNTS_NGN = [3000, 5000, 10000]; // kobo-free display; sent as kobo to t
 export default function TipPage() {
   const [amount, setAmount] = useState(5000);
   const [pending, setPending] = useState<"fiat" | "crypto" | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function tip(method: "fiat" | "crypto") {
     setPending(method);
-    const base = process.env.NEXT_PUBLIC_SERVICE_URL;
-    const endpoint =
-      method === "fiat" ? `${base}/payments/flutterwave/link` : `${base}/payments/nowpayments/link`;
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amountNgnKobo: amount * 100 }),
-    });
-    const { url } = await res.json();
-    window.location.href = url;
+    setError(null);
+    try {
+      const base = process.env.NEXT_PUBLIC_SERVICE_URL;
+      const endpoint =
+        method === "fiat" ? `${base}/payments/flutterwave/link` : `${base}/payments/nowpayments/link`;
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amountNgnKobo: amount * 100 }),
+      });
+      if (!res.ok) throw new Error("Payment service unavailable");
+      const { url } = await res.json();
+      if (!url) throw new Error("No payment link returned");
+      window.location.href = url;
+    } catch {
+      setError("Something went wrong. Please try again.");
+      setPending(null);
+    }
   }
 
   return (
@@ -68,6 +77,7 @@ export default function TipPage() {
           {pending === "crypto" ? "One moment…" : "Pay with crypto"}
         </Button>
       </div>
+      {error && <p className="mt-3 text-xs text-destructive">{error}</p>}
     </main>
   );
 }

@@ -12,11 +12,19 @@ export function SignupForm() {
 
   if (state.ok) {
     return (
-      <p className="font-serif text-lg text-foreground">
-        {state.alreadySubscribed
-          ? "Already on the roll — a new link arrives each morning."
-          : "You're on the roll — check your inbox."}
-      </p>
+      <div>
+        <p className="font-serif text-lg text-foreground">
+          {state.alreadySubscribed
+            ? "Already on the roll — a new link arrives each morning."
+            : "You're on the roll — check your inbox."}
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-2 font-mono text-[11px] text-primary hover:underline"
+        >
+          sign up another email →
+        </button>
+      </div>
     );
   }
 

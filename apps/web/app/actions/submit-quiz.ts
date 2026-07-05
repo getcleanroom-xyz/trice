@@ -12,20 +12,28 @@ export async function submitQuiz(
 ) {
   const questions = await db.query.quizQuestions.findMany({
     where: eq(quizQuestions.dayId, dayId),
+    orderBy: quizQuestions.sortOrder,
   });
 
-  const score = questions.reduce(
-    (acc, q, i) => acc + (answers[i] === q.correctIndex ? 1 : 0),
-    0,
-  );
+  const results = questions.map((q, i) => ({
+    prompt: q.prompt,
+    choices: q.choices,
+    correctIndex: q.correctIndex,
+    chosenIndex: answers[i] ?? -1,
+    correct: answers[i] === q.correctIndex,
+  }));
 
-  await db
-    .insert(quizAttempts)
-    .values({ subscriberId, dayId, answers, score, taskSubmission })
-    .onConflictDoUpdate({
-      target: [quizAttempts.subscriberId, quizAttempts.dayId],
-      set: { answers, score, taskSubmission },
-    });
+  const score = results.filter((r) => r.correct).length;
 
-  return { score, total: questions.length };
+  if (subscriberId !== "admin") {
+    await db
+      .insert(quizAttempts)
+      .values({ subscriberId, dayId, answers, score, taskSubmission })
+      .onConflictDoUpdate({
+        target: [quizAttempts.subscriberId, quizAttempts.dayId],
+        set: { answers, score, taskSubmission },
+      });
+  }
+
+  return { score, total: questions.length, results };
 }

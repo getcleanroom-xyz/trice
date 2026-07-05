@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { DayLayout } from "@/components/day-layout";
 import { VideoPanel } from "@/components/video-panel";
 import { NoteCard } from "@/components/note-card";
@@ -43,6 +43,8 @@ export function DailyContent({
   const [learningGoalMet, setLearningGoalMet] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
   const [totalTarget, setTotalTarget] = useState(TOTAL_GOAL_SECONDS);
+  const [savedSeconds, setSavedSeconds] = useState(0);
+  const quizRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (videoDurations.length > 0) {
@@ -54,6 +56,9 @@ export function DailyContent({
     fetch(`/api/progress?dayId=${dayId}&subscriberId=${subscriberId}`)
       .then((r) => r.json())
       .then((data) => {
+        if (data.totalWatchSeconds > 0) {
+          setSavedSeconds(data.totalWatchSeconds);
+        }
         if (data.completedAt) {
           setLearningGoalMet(true);
         }
@@ -61,22 +66,33 @@ export function DailyContent({
       .catch(() => {});
   }, [dayId, subscriberId]);
 
+  const onComplete = useCallback(() => {
+    setLearningGoalMet(true);
+    setShowConfetti(true);
+    setTimeout(() => setShowConfetti(false), 3500);
+  }, []);
+
   const { completed, watchSeconds } = useVideoTracker({
     subscriberId,
     dayId,
     targetSeconds: totalTarget,
-    onComplete: () => {
-      setLearningGoalMet(true);
-      setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 3500);
-    },
+    initialSeconds: savedSeconds,
+    onComplete,
   });
 
+  useEffect(() => {
+    if (showQuiz && quizRef.current) {
+      quizRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [showQuiz]);
+
   const videoPanel = learningGoalMet ? (
-    <CompletionCard onStartQuiz={() => setShowQuiz(true)} quizStarted={showQuiz} />
+    <CompletionCard onStartQuiz={() => setShowQuiz(true)} quizStarted={showQuiz} goalMinutes={Math.ceil(totalTarget / 60)} />
   ) : (
     <VideoPanel title={title} videoUrls={videoUrls} />
   );
+
+  const estimatedMinutes = Math.max(1, Math.ceil((questions.length * 30 + (task ? 120 : 0)) / 60));
 
   return (
     <DayLayout
@@ -88,23 +104,25 @@ export function DailyContent({
           </div>
         ),
         notes: <NoteCard notes={notes} />,
-        tabs: <InfoTabs intro={intro} objectives={objectives} summary={summary} task={task} />,
+        tabs: <InfoTabs intro={intro} objectives={objectives} summary={summary} />,
         quiz: (
-          showQuiz ? (
-            <ClosingPage subscriberId={subscriberId} dayId={dayId} questions={questions} task={task} />
-          ) : (
-            <div className="flex h-full flex-col items-center justify-center p-6 text-center">
-              <p className="mb-1 font-mono text-[10px] tracking-widest text-primary/70 uppercase">
-                the closing page
-              </p>
-              <p className="mb-5 font-serif text-lg text-foreground">
-                {questions.length} question{questions.length !== 1 && "s"}. Five minutes.
-              </p>
-              {!learningGoalMet && (
-                <p className="text-xs text-muted-foreground">Complete the learning goal to unlock the quiz.</p>
-              )}
-            </div>
-          )
+          <div ref={quizRef} className="h-full">
+            {showQuiz ? (
+              <ClosingPage subscriberId={subscriberId} dayId={dayId} questions={questions} task={task} />
+            ) : (
+              <div className="flex h-full flex-col items-center justify-center p-6 text-center">
+                <p className="mb-1 font-mono text-[10px] tracking-widest text-primary/70 uppercase">
+                  the closing page
+                </p>
+                <p className="mb-5 font-serif text-lg text-foreground">
+                  {questions.length} question{questions.length !== 1 && "s"}. About {estimatedMinutes} minute{estimatedMinutes !== 1 && "s"}.
+                </p>
+                {!learningGoalMet && (
+                  <p className="text-xs text-muted-foreground">Complete the learning goal to unlock the quiz.</p>
+                )}
+              </div>
+            )}
+          </div>
         ),
       }}
     />

@@ -71,7 +71,7 @@ export default async function HomePage() {
               <h3 className="mb-2 font-serif text-base text-foreground">
                 {openDay.title}
               </h3>
-              <p className="text-xs leading-relaxed text-muted-foreground">
+              <p className="line-clamp-3 text-xs leading-relaxed text-muted-foreground">
                 {openDay.intro}
               </p>
             </div>

@@ -6,18 +6,20 @@ function useVideoTracker({
   subscriberId,
   dayId,
   targetSeconds,
+  initialSeconds = 0,
   onComplete,
 }: {
   subscriberId: string;
   dayId: string;
   targetSeconds: number;
+  initialSeconds?: number;
   onComplete: () => void;
 }) {
-  const accumulatedRef = useRef(0);
-  const [completed, setCompleted] = useState(false);
-  const [watchSeconds, setWatchSeconds] = useState(0);
+  const accumulatedRef = useRef(initialSeconds);
+  const [completed, setCompleted] = useState(() => initialSeconds >= targetSeconds && targetSeconds > 0);
+  const [watchSeconds, setWatchSeconds] = useState(Math.floor(initialSeconds));
   const saveTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const completedRef = useRef(false);
+  const completedRef = useRef(initialSeconds >= targetSeconds && targetSeconds > 0);
 
   const save = useCallback((seconds: number) => {
     if (completedRef.current) return;
@@ -34,6 +36,17 @@ function useVideoTracker({
   }, [subscriberId, dayId, targetSeconds]);
 
   useEffect(() => {
+    accumulatedRef.current = initialSeconds;
+    setWatchSeconds(Math.floor(initialSeconds));
+    if (initialSeconds >= targetSeconds && targetSeconds > 0) {
+      completedRef.current = true;
+      setCompleted(true);
+    }
+  }, [initialSeconds, targetSeconds]);
+
+  useEffect(() => {
+    if (completedRef.current) return;
+
     const interval = setInterval(() => {
       if (document.hidden) return;
 
@@ -43,7 +56,7 @@ function useVideoTracker({
       if (saveTimer.current) clearTimeout(saveTimer.current);
       saveTimer.current = setTimeout(() => save(accumulatedRef.current), 10000);
 
-      if (!completedRef.current && targetSeconds > 0 && accumulatedRef.current >= targetSeconds) {
+      if (targetSeconds > 0 && accumulatedRef.current >= targetSeconds) {
         completedRef.current = true;
         setCompleted(true);
         save(accumulatedRef.current);
