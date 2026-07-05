@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
   if (!dayId || !subscriberId) return NextResponse.json({ error: "Missing params" }, { status: 400 });
 
   if (subscriberId === "admin") {
-    return NextResponse.json({ totalWatchSeconds: 0, completedAt: new Date().toISOString() });
+    return NextResponse.json({ totalWatchSeconds: 0, completedAt: null });
   }
 
   const row = await db.query.learningProgress.findFirst({

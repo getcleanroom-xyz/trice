@@ -73,7 +73,7 @@ export function DailyContent({
   });
 
   const videoPanel = learningGoalMet ? (
-    <CompletionCard onStartQuiz={() => setShowQuiz(true)} />
+    <CompletionCard onStartQuiz={() => setShowQuiz(true)} quizStarted={showQuiz} />
   ) : (
     <VideoPanel title={title} videoUrls={videoUrls} />
   );
@@ -90,8 +90,8 @@ export function DailyContent({
         notes: <NoteCard notes={notes} />,
         tabs: <InfoTabs intro={intro} objectives={objectives} summary={summary} task={task} />,
         quiz: (
-          showQuiz || learningGoalMet ? (
-            <ClosingPage subscriberId={subscriberId} dayId={dayId} questions={questions} />
+          showQuiz ? (
+            <ClosingPage subscriberId={subscriberId} dayId={dayId} questions={questions} task={task} />
           ) : (
             <div className="flex h-full flex-col items-center justify-center p-6 text-center">
               <p className="mb-1 font-mono text-[10px] tracking-widest text-primary/70 uppercase">
@@ -102,14 +102,6 @@ export function DailyContent({
               </p>
               {!learningGoalMet && (
                 <p className="text-xs text-muted-foreground">Complete the learning goal to unlock the quiz.</p>
-              )}
-              {learningGoalMet && (
-                <button
-                  onClick={() => setShowQuiz(true)}
-                  className="mt-2 rounded-lg border border-primary px-5 py-2.5 text-sm font-mono text-foreground hover:bg-primary/10 transition-colors"
-                >
-                  Begin quiz
-                </button>
               )}
             </div>
           )
