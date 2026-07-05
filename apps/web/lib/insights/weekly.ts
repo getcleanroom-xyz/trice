@@ -1,4 +1,5 @@
-import { db, days, quizAttempts, learningProgress, subscribers } from "@/lib/db/schema";
+import { db } from "@/lib/db/client";
+import { days, quizAttempts, learningProgress, subscribers } from "@/lib/db/schema";
 import { and, eq, gte, lte, desc } from "drizzle-orm";
 
 export type WeekInsights = {
