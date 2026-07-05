@@ -115,10 +115,10 @@ export function ClosingPage({
     );
   }
 
-  function submit(taskSub: string) {
+  function submit(finalAnswers: number[], taskSub: string) {
     startTransition(async () => {
       try {
-        const outcome = await submitQuiz(subscriberId, dayId, answers, taskSub || undefined);
+        const outcome = await submitQuiz(subscriberId, dayId, finalAnswers, taskSub || undefined);
         setResult(outcome);
       } catch {
         setError("Something went wrong. Please try again.");
@@ -160,7 +160,7 @@ export function ClosingPage({
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <Button
-            onClick={() => submit(taskSubmission)}
+            onClick={() => submit(answers, taskSubmission)}
             disabled={pending || !taskSubmission.trim()}
             className="flex-1"
           >
@@ -188,7 +188,7 @@ export function ClosingPage({
       return;
     }
 
-    submit("");
+    submit(next, "");
   }
 
   return (
