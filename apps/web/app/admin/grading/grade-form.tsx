@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { gradeTask } from "@/app/admin/content-actions";
 import { Button } from "@/components/ui/button";
+import { MarkdownEditor } from "@/components/ui/markdown-editor";
 
 function GradeForm({ attemptId, currentGrade }: { attemptId: string; currentGrade: string }) {
   const [grade, setGrade] = useState(currentGrade);
@@ -25,14 +26,8 @@ function GradeForm({ attemptId, currentGrade }: { attemptId: string; currentGrad
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2">
-      <input
-        type="text"
-        value={grade}
-        onChange={(e) => setGrade(e.target.value)}
-        placeholder="Write feedback / grade..."
-        className="flex-1 h-9 rounded-sm border border-input bg-transparent px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-      />
+    <form onSubmit={handleSubmit} className="space-y-2">
+      <MarkdownEditor value={grade} onChange={setGrade} placeholder="Write feedback / grade..." minRows={2} />
       <Button type="submit" disabled={pending || !grade.trim()} size="sm">
         {pending ? "Saving…" : "Submit grade"}
       </Button>

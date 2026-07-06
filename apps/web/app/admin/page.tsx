@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { listTopics, listDays } from "@/app/admin/content-actions";
 import { buttonVariants } from "@/components/ui/button";
 import { AdminDayList } from "@/components/admin/admin-day-list";
@@ -13,6 +14,9 @@ export default async function AdminPage({
   searchParams: Promise<{ q?: string; sort?: string; page?: string; tab?: string }>;
 }) {
   const { q, sort, page, tab } = await searchParams;
+
+  if (tab === "grading") redirect("/admin/grading");
+
   const pageNum = Math.max(1, Number(page) || 1);
   const showTopics = tab !== "days";
 
@@ -29,9 +33,6 @@ export default async function AdminPage({
           / <Link href="/admin" className="hover:text-primary">admin</Link>
         </span>
         <div className="flex gap-3">
-          <Link href="/admin/grading" className={buttonVariants({ variant: "secondary", size: "sm" })}>
-            Grading
-          </Link>
           <Link href="/admin/topics/new" className={buttonVariants({ variant: "secondary", size: "sm" })}>
             New topic
           </Link>
