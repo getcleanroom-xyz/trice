@@ -132,8 +132,9 @@ export function DayForm({ topics, dayData, dayId }: { topics: { id: string; titl
 
   useEffect(() => {
     if (slugTouchedRef.current) return;
-    if (!watchedSlug && watchedTitle) {
-      const generated = watchedTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    if (!watchedTitle) return;
+    const generated = watchedTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    if (!watchedSlug || watchedSlug === generated) {
       setValue("slug", generated, { shouldValidate: false });
     }
   }, [watchedTitle, watchedSlug, setValue]);
