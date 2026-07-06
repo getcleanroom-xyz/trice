@@ -146,7 +146,7 @@ export function ClosingPage({
         <p className="mb-2 text-center font-mono text-[10px] tracking-widest text-primary/70 uppercase">
           task
         </p>
-        <div className="mb-4 flex-1 min-h-0 overflow-y-auto text-sm text-foreground/80 leading-relaxed scrollbar-thin">
+        <div className="mb-4 text-sm text-foreground/80 leading-relaxed">
           <Markdown>{task}</Markdown>
         </div>
         <textarea
