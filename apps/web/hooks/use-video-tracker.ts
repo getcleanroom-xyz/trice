@@ -62,9 +62,9 @@ function useVideoTracker({
       saveTimer.current = setTimeout(() => save(accumulatedRef.current), 10000);
 
       if (targetSeconds > 0 && accumulatedRef.current >= targetSeconds) {
+        save(accumulatedRef.current);
         completedRef.current = true;
         setCompleted(true);
-        save(accumulatedRef.current);
         onComplete();
       }
     }, 1000);
