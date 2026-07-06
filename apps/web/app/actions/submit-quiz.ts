@@ -24,6 +24,7 @@ export async function submitQuiz(
   }));
 
   const score = results.filter((r) => r.correct).length;
+  let taskGrade: string | null = null;
 
   if (subscriberId !== "admin") {
     await db
@@ -35,5 +36,5 @@ export async function submitQuiz(
       });
   }
 
-  return { score, total: questions.length, results };
+  return { score, total: questions.length, results, taskGrade };
 }

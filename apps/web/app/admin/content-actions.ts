@@ -2,8 +2,8 @@
 
 import { z } from "zod";
 import { db } from "@/lib/db/client";
-import { topics, days, quizQuestions, quizTasks } from "@/lib/db/schema";
-import { eq, or, like, desc, asc, sql, count } from "drizzle-orm";
+import { topics, days, quizQuestions, quizTasks, quizAttempts, subscribers } from "@/lib/db/schema";
+import { eq, or, like, desc, asc, sql, count, inArray } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
 const dayQuestionSchema = z.object({
@@ -228,4 +228,47 @@ export async function deleteDay(formData: FormData) {
   });
 
   redirect("/admin");
+}
+
+export async function listUngradedTasks() {
+  const attempts = await db.query.quizAttempts.findMany({
+    where: sql`${quizAttempts.taskSubmission} IS NOT NULL`,
+    orderBy: desc(quizAttempts.completedAt),
+  });
+
+  if (attempts.length === 0) return [];
+
+  const subscriberIds = [...new Set(attempts.map((a) => a.subscriberId))];
+  const dayIds = [...new Set(attempts.map((a) => a.dayId))];
+
+  const [subs, dayRows, taskRows] = await Promise.all([
+    db.query.subscribers.findMany({ where: inArray(subscribers.id, subscriberIds) }),
+    db.query.days.findMany({ where: inArray(days.id, dayIds) }),
+    db.query.quizTasks.findMany({ where: inArray(quizTasks.dayId, dayIds) }),
+  ]);
+
+  const subMap = new Map(subs.map((s) => [s.id, s.email]));
+  const dayMap = new Map(dayRows.map((d) => [d.id, d]));
+  const taskMap = new Map(taskRows.map((t) => [t.dayId, t.prompt]));
+
+  return attempts.map((a) => ({
+    id: a.id,
+    subscriberId: a.subscriberId,
+    subscriberEmail: subMap.get(a.subscriberId) ?? "unknown",
+    dayId: a.dayId,
+    dayTitle: dayMap.get(a.dayId)?.title ?? "unknown",
+    dayNumber: dayMap.get(a.dayId)?.dayNumber ?? 0,
+    taskPrompt: taskMap.get(a.dayId) ?? "",
+    taskSubmission: a.taskSubmission ?? "",
+    taskGrade: a.taskGrade,
+    score: a.score,
+    completedAt: a.completedAt,
+  }));
+}
+
+export async function gradeTask(attemptId: string, grade: string) {
+  await db
+    .update(quizAttempts)
+    .set({ taskGrade: grade })
+    .where(eq(quizAttempts.id, attemptId));
 }

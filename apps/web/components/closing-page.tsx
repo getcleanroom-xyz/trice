@@ -27,7 +27,7 @@ export function ClosingPage({
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
   const [taskSubmission, setTaskSubmission] = useState("");
-  const [result, setResult] = useState<{ score: number; total: number; results: ResultItem[] } | null>(null);
+  const [result, setResult] = useState<{ score: number; total: number; results: ResultItem[]; taskGrade?: string | null } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -58,6 +58,19 @@ export function ClosingPage({
             {result.score} of {result.total}
           </p>
         </div>
+        {hasTask && (
+          <div className="mb-4 rounded-sm border border-border p-3 text-sm">
+            <p className="mb-1 font-mono text-[9px] text-muted-foreground">task</p>
+            {result.taskGrade ? (
+              <div>
+                <p className="mb-1 text-xs text-muted-foreground">Grade:</p>
+                <p className="text-foreground/80 leading-relaxed">{result.taskGrade}</p>
+              </div>
+            ) : (
+              <p className="text-muted-foreground italic">Awaiting grade.</p>
+            )}
+          </div>
+        )}
         {missed.length > 0 ? (
           <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin">
             <p className="mb-3 text-xs text-muted-foreground">

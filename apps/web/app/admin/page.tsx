@@ -29,6 +29,9 @@ export default async function AdminPage({
           / <Link href="/admin" className="hover:text-primary">admin</Link>
         </span>
         <div className="flex gap-3">
+          <Link href="/admin/grading" className={buttonVariants({ variant: "secondary", size: "sm" })}>
+            Grading
+          </Link>
           <Link href="/admin/topics/new" className={buttonVariants({ variant: "secondary", size: "sm" })}>
             New topic
           </Link>
