@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Markdown } from "@/components/ui/markdown";
 import { GradeForm } from "./grade-form";
 
@@ -14,7 +15,15 @@ type GradingTask = {
   score: number;
 };
 
-function GradingPanel({ tasks }: { tasks: GradingTask[] }) {
+function GradingPanel({ tasks: initial }: { tasks: GradingTask[] }) {
+  const [tasks, setTasks] = useState(initial);
+
+  function handleGrade(attemptId: string, grade: string) {
+    setTasks((prev) =>
+      prev.map((t) => (t.id === attemptId ? { ...t, taskGrade: grade } : t)),
+    );
+  }
+
   const ungraded = tasks.filter((t) => !t.taskGrade);
   const graded = tasks.filter((t) => t.taskGrade);
 
@@ -57,7 +66,7 @@ function GradingPanel({ tasks }: { tasks: GradingTask[] }) {
                     <Markdown>{task.taskSubmission}</Markdown>
                   </div>
                 </div>
-                <GradeForm attemptId={task.id} currentGrade={task.taskGrade ?? ""} />
+                <GradeForm attemptId={task.id} currentGrade={task.taskGrade ?? ""} onGrade={(grade) => handleGrade(task.id, grade)} />
               </div>
             ))}
           </div>

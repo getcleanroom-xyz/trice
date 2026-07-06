@@ -5,7 +5,7 @@ import { gradeTask } from "@/app/admin/content-actions";
 import { Button } from "@/components/ui/button";
 import { MarkdownEditor } from "@/components/ui/markdown-editor";
 
-function GradeForm({ attemptId, currentGrade }: { attemptId: string; currentGrade: string }) {
+function GradeForm({ attemptId, currentGrade, onGrade }: { attemptId: string; currentGrade: string; onGrade?: (grade: string) => void }) {
   const [grade, setGrade] = useState(currentGrade);
   const [pending, startTransition] = useTransition();
   const [done, setDone] = useState(false);
@@ -15,6 +15,7 @@ function GradeForm({ attemptId, currentGrade }: { attemptId: string; currentGrad
     if (!grade.trim()) return;
     startTransition(async () => {
       await gradeTask(attemptId, grade.trim());
+      onGrade?.(grade.trim());
       setDone(true);
     });
   }
