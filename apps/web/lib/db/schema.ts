@@ -149,7 +149,7 @@ export const emailSends = pgTable("email_sends", {
   id: uuid("id").primaryKey().defaultRandom(),
   subscriberId: uuid("subscriber_id").notNull().references(() => subscribers.id),
   dayId: uuid("day_id").references(() => days.id),
-  kind: text("kind", { enum: ["confirmation", "daily_drop"] }).notNull(),
+  kind: text("kind", { enum: ["confirmation", "daily_drop", "grading_notification"] }).notNull(),
   status: text("status", { enum: ["queued", "sent", "failed"] })
     .default("queued")
     .notNull(),
