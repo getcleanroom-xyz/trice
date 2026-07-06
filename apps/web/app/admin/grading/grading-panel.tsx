@@ -52,14 +52,14 @@ function GradingPanel({ tasks: initial }: { tasks: GradingTask[] }) {
                     ungraded
                   </span>
                 </div>
-                <details className="mb-3">
-                  <summary className="cursor-pointer font-mono text-[10px] text-muted-foreground hover:text-foreground">
-                    Show task
-                  </summary>
-                  <div className="mt-2 rounded-sm bg-secondary/50 p-3 text-sm leading-relaxed text-foreground/80">
+                <div className="mb-3 rounded-sm bg-secondary/50 p-3">
+                  <p className="mb-1 font-mono text-[9px] text-muted-foreground">task prompt</p>
+                  {task.taskPrompt ? (
                     <Markdown>{task.taskPrompt}</Markdown>
-                  </div>
-                </details>
+                  ) : (
+                    <p className="text-xs text-muted-foreground italic">No task prompt found for this day.</p>
+                  )}
+                </div>
                 <div className="mb-3 rounded-sm bg-background p-3">
                   <p className="mb-1 font-mono text-[9px] text-muted-foreground">submission</p>
                   <div className="text-sm leading-relaxed text-foreground/80">
