@@ -1,11 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
+import { useState, useActionState } from "react";
 import { updateTopic, type UpdateTopicState } from "@/app/admin/topic-actions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { useToast } from "@/components/ui/toast";
 
 const initialState: UpdateTopicState = { ok: false };
@@ -24,6 +24,7 @@ export function TopicEditForm({
   hasDays: boolean;
 }) {
   const [state, formAction, pending] = useActionState(updateTopic.bind(null, topicId), initialState);
+  const [description, setDescription] = useState(initialDescription);
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
@@ -33,7 +34,8 @@ export function TopicEditForm({
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="description">description</Label>
-        <Textarea id="description" name="description" rows={3} defaultValue={initialDescription} required />
+        <MarkdownEditor value={description} onChange={setDescription} placeholder="Describe this topic…" minRows={3} />
+        <input type="hidden" name="description" value={description} />
       </div>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="sortOrder">sort order</Label>
