@@ -115,11 +115,14 @@ export function DailyContent({
                   the closing page
                 </p>
                 <p className="mb-5 font-serif text-lg text-foreground">
-                  {questions.length} question{questions.length !== 1 && "s"}. About {estimatedMinutes} minute{estimatedMinutes !== 1 && "s"}.
+                  {questions.length} question{questions.length !== 1 && "s"}{task ? " + 1 task" : ""}. About {estimatedMinutes} minute{estimatedMinutes !== 1 && "s"}.
                 </p>
-                {!learningGoalMet && (
-                  <p className="text-xs text-muted-foreground">Complete the learning goal to unlock the quiz.</p>
-                )}
+                <button
+                  onClick={() => setShowQuiz(true)}
+                  className="rounded-sm border border-input bg-transparent px-4 py-2 text-sm text-foreground hover:bg-secondary transition-colors"
+                >
+                  Begin
+                </button>
               </div>
             )}
           </div>
