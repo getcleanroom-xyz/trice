@@ -88,10 +88,7 @@ export function DayForm({ topics, dayData, dayId }: { topics: { id: string; titl
   }
 
   function getInitialValues(): FormValues {
-    const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
-    const draftSlug = params.get("draft");
-    const draft = draftSlug ? loadDraft(draftSlug) : null;
-    const source = dayData ?? draft;
+    const source = dayData;
     return {
       topicId: source?.topicId ?? topics[0]?.id ?? "",
       dayNumber: source?.dayNumber ?? 1,
@@ -116,6 +113,16 @@ export function DayForm({ topics, dayData, dayId }: { topics: { id: string; titl
     shouldFocusError: false,
   });
 
+  useEffect(() => {
+    if (dayData) return;
+    const params = new URLSearchParams(window.location.search);
+    const draftSlug = params.get("draft");
+    if (draftSlug) {
+      const draft = loadDraft(draftSlug);
+      if (draft) form.reset(draft);
+    }
+  }, []);
+
   const { register, control, handleSubmit, watch, setValue, getValues, formState: { errors } } = form;
 
   const watchedTitle = watch("title");
@@ -125,11 +132,11 @@ export function DayForm({ topics, dayData, dayId }: { topics: { id: string; titl
 
   useEffect(() => {
     if (slugTouchedRef.current) return;
-    if (watchedTitle) {
+    if (!watchedSlug && watchedTitle) {
       const generated = watchedTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
       setValue("slug", generated, { shouldValidate: false });
     }
-  }, [watchedTitle, setValue]);
+  }, [watchedTitle, watchedSlug, setValue]);
 
   const saveDraft = useCallback(() => {
     const slug = getValues("slug") || getValues("title").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -159,12 +166,6 @@ export function DayForm({ topics, dayData, dayId }: { topics: { id: string; titl
       }
     }
   }, [allValues.slug]);
-
-  useEffect(() => {
-    if (Object.keys(errors).length > 0) {
-      console.log("Form validation errors:", JSON.stringify(errors, null, 2));
-    }
-  }, [errors]);
 
   const objectivesArray = useFieldArray<FormValues, "objectives">({ control, name: "objectives" });
   const questionsArray = useFieldArray<FormValues, "questions">({ control, name: "questions" });
@@ -302,7 +303,12 @@ export function DayForm({ topics, dayData, dayId }: { topics: { id: string; titl
                       <div className="flex gap-2">
                         <Input {...register(`videoUrls.${i}.url`)} placeholder="https://www.youtube.com/embed/..." />
                         {videoUrlsArray.fields.length > 1 && (
-                          <button type="button" onClick={() => videoUrlsArray.remove(i)} className="text-muted-foreground" aria-label="Remove video">
+                          <button type="button" onClick={() => {
+                            videoUrlsArray.remove(i);
+                            const durations = [...(allValues.videoDurations ?? [])];
+                            durations.splice(i, 1);
+                            setValue("videoDurations", durations, { shouldValidate: false });
+                          }} className="text-muted-foreground" aria-label="Remove video">
                             <X className="h-4 w-4" />
                           </button>
                         )}
@@ -495,7 +501,21 @@ export function DayForm({ topics, dayData, dayId }: { topics: { id: string; titl
           <ChevronLeft className="h-4 w-4" /> Back
         </Button>
         {step < STEPS.length - 1 ? (
-          <Button type="button" onClick={() => setStep((s) => s + 1)}>
+          <Button type="button" onClick={async () => {
+            const stepFields: Record<number, (keyof FormValues)[]> = {
+              0: ["topicId", "dayNumber", "slug", "title", "intro"],
+              1: ["videoUrls"],
+              2: ["objectives", "summary", "notes"],
+              3: ["questions"],
+              4: ["publishAt", "graceHours"],
+            };
+            const fields = stepFields[step];
+            if (fields) {
+              const valid = await form.trigger(fields);
+              if (!valid) return;
+            }
+            setStep((s) => s + 1);
+          }}>
             Next <ChevronRight className="h-4 w-4" />
           </Button>
         ) : (

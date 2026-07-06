@@ -1,6 +1,6 @@
 import { db } from "@/lib/db/client";
-import { days, quizAttempts, learningProgress, subscribers } from "@/lib/db/schema";
-import { and, eq, gte, lte, desc } from "drizzle-orm";
+import { days, quizAttempts, quizQuestions, learningProgress, subscribers } from "@/lib/db/schema";
+import { and, eq, gte, lte, desc, inArray } from "drizzle-orm";
 
 export type WeekInsights = {
   subscriber: { email: string; currentStreak: number; longestStreak: number };
@@ -80,8 +80,6 @@ export async function getWeeklyInsights(
   const dayInsights = weekDays.map((day) => {
     const progress = progressMap.get(day.id);
     const attempt = attemptMap.get(day.id);
-    const videoDurations = (day.videoDurations as number[]) ?? [];
-    const targetSeconds = videoDurations.reduce((sum, d) => sum + d * 60, 0) || 600;
 
     return {
       id: day.id,
@@ -92,20 +90,20 @@ export async function getWeeklyInsights(
       watched: !!progress?.completedAt,
       watchSeconds: progress?.totalWatchSeconds ?? 0,
       quizScore: attempt?.score ?? null,
-      quizTotal: targetSeconds > 0 ? 0 : 0,
+      quizTotal: 0,
       taskSubmitted: !!(attempt?.taskSubmission && attempt.taskSubmission.length > 0),
     };
   });
 
-  const quizQuestions = await db.query.quizQuestions.findMany({
-    where: dayIds.length > 0 ? undefined : undefined,
-  });
+  const allWeekQuestions = dayIds.length > 0
+    ? await db.query.quizQuestions.findMany({
+        where: inArray(quizQuestions.dayId, dayIds),
+      })
+    : [];
 
   const questionsByDay = new Map<string, number>();
-  for (const q of quizQuestions) {
-    if (dayIds.includes(q.dayId)) {
-      questionsByDay.set(q.dayId, (questionsByDay.get(q.dayId) ?? 0) + 1);
-    }
+  for (const q of allWeekQuestions) {
+    questionsByDay.set(q.dayId, (questionsByDay.get(q.dayId) ?? 0) + 1);
   }
 
   for (const di of dayInsights) {

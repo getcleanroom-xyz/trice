@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { db } from "@/lib/db/client";
 import { insightTokens, quizQuestions } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { getWeeklyInsights, type WeekInsights } from "@/lib/insights/weekly";
 import { Check, X, Minus } from "lucide-react";
 
@@ -96,10 +96,12 @@ export default async function InsightsPage({
 
   const insights = await getWeeklyInsights(insightToken.subscriberId, weekStart);
 
-  const allQuestionIds = insights.days.flatMap((d) => d.id);
+  const dayIds = insights.days.map((d) => d.id);
   const allQuestions =
-    allQuestionIds.length > 0
-      ? await db.query.quizQuestions.findMany()
+    dayIds.length > 0
+      ? await db.query.quizQuestions.findMany({
+          where: inArray(quizQuestions.dayId, dayIds),
+        })
       : [];
   const questionsByDay = new Map<string, typeof allQuestions>();
   for (const q of allQuestions) {

@@ -6,6 +6,7 @@ import { Trash2, ExternalLink, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SearchInput, SortSelect, Pagination } from "./admin-controls";
 import { deleteDay } from "@/app/admin/content-actions";
+import { useAdminKeyboard } from "./use-admin-keyboard";
 
 type Day = {
   id: string;
@@ -44,6 +45,7 @@ export function AdminDayList({
 }) {
   const [showConfirm, setShowConfirm] = useState<string | null>(null);
   const now = Date.now();
+  useAdminKeyboard();
 
   return (
     <section>

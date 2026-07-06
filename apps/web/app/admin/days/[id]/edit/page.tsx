@@ -1,6 +1,14 @@
 import { notFound } from "next/navigation";
+import { db } from "@/lib/db/client";
+import { quizTasks } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import { getDay, getDayQuestions, listTopics } from "@/app/admin/content-actions";
 import { DayForm } from "@/components/admin/day-form";
+
+function pad(n: number) { return String(n).padStart(2, "0"); }
+function toLocalISO(d: Date): string {
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +19,10 @@ export default async function EditDayPage({ params }: { params: Promise<{ id: st
 
   if (!day) notFound();
 
-  const questions = await getDayQuestions(day.id);
+  const [questions, existingTask] = await Promise.all([
+    getDayQuestions(day.id),
+    db.query.quizTasks.findFirst({ where: eq(quizTasks.dayId, day.id) }),
+  ]);
 
   const dayData = {
     topicId: day.topicId,
@@ -19,18 +30,19 @@ export default async function EditDayPage({ params }: { params: Promise<{ id: st
     slug: day.slug,
     title: day.title,
     videoUrls: (day.videoUrls as string[]).map((url) => ({ url })),
+    videoDurations: (day.videoDurations as number[]) ?? [],
     intro: day.intro,
     objectives: (day.objectives as string[]).map((value) => ({ value })),
     summary: day.summary,
     notes: day.notes,
-    publishAt: day.publishAt.toISOString().slice(0, 16),
+    publishAt: toLocalISO(day.publishAt),
     graceHours: Math.round((day.expiresAt.getTime() - day.publishAt.getTime()) / (60 * 60 * 1000)),
     questions: questions.map((q) => ({
       prompt: q.prompt,
       choices: q.choices as string[],
       correctIndex: q.correctIndex,
     })),
-    task: "",
+    task: existingTask?.prompt ?? "",
   };
 
   return (

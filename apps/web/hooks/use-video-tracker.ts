@@ -20,7 +20,7 @@ function useVideoTracker({
   const [watchSeconds, setWatchSeconds] = useState(Math.floor(initialSeconds));
   const saveTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const completedRef = useRef(initialSeconds >= targetSeconds && targetSeconds > 0);
-  const syncedRef = useRef(false);
+  const lastInitialRef = useRef(initialSeconds);
 
   const save = useCallback((seconds: number) => {
     if (completedRef.current) return;
@@ -37,12 +37,12 @@ function useVideoTracker({
   }, [subscriberId, dayId, targetSeconds]);
 
   useEffect(() => {
-    if (syncedRef.current) return;
-    if (initialSeconds > 0) {
-      accumulatedRef.current = initialSeconds;
-      setWatchSeconds(Math.floor(initialSeconds));
-      syncedRef.current = true;
-      if (initialSeconds >= targetSeconds && targetSeconds > 0) {
+    if (initialSeconds > lastInitialRef.current) {
+      const delta = initialSeconds - lastInitialRef.current;
+      accumulatedRef.current += delta;
+      setWatchSeconds(Math.floor(accumulatedRef.current));
+      lastInitialRef.current = initialSeconds;
+      if (accumulatedRef.current >= targetSeconds && targetSeconds > 0 && !completedRef.current) {
         completedRef.current = true;
         setCompleted(true);
       }
