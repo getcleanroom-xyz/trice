@@ -7,6 +7,7 @@ import { submitQuiz } from "@/app/actions/submit-quiz";
 import { Button } from "@/components/ui/button";
 import { DragHandle } from "@/components/panel-handles";
 import { Markdown } from "@/components/ui/markdown";
+import { MarkdownEditor } from "@/components/ui/markdown-editor";
 
 type Question = { id: string; prompt: string; choices: string[] };
 type ResultItem = { prompt: string; choices: string[]; correctIndex: number; chosenIndex: number; correct: boolean };
@@ -149,12 +150,14 @@ export function ClosingPage({
         <div className="mb-4 text-sm text-foreground/80 leading-relaxed">
           <Markdown>{task}</Markdown>
         </div>
-        <textarea
-          value={taskSubmission}
-          onChange={(e) => setTaskSubmission(e.target.value)}
-          placeholder="Write your solution here..."
-          className="mb-3 w-full flex-1 min-h-[120px] rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary resize-none"
-        />
+        <div className="mb-3 flex-1">
+          <MarkdownEditor
+            value={taskSubmission}
+            onChange={setTaskSubmission}
+            placeholder="Write your solution here..."
+            minRows={4}
+          />
+        </div>
         <div className="flex gap-2">
           <Button variant="secondary" onClick={() => setStep(questions.length - 1)} className="px-3">
             <ChevronLeft className="h-4 w-4" />

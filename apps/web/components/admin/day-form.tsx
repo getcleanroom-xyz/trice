@@ -8,7 +8,7 @@ import { X, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { createDay, updateDay } from "@/app/admin/content-actions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { MarkdownEditor } from "@/components/ui/markdown-editor";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -277,7 +277,9 @@ export function DayForm({ topics, dayData, dayId }: { topics: { id: string; titl
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label>intro</Label>
-                <Textarea {...register("intro")} rows={2} />
+                <Controller control={control} name="intro" render={({ field }) => (
+                  <MarkdownEditor value={field.value} onChange={field.onChange} placeholder="Write an intro..." minRows={2} />
+                )} />
                 {errors.intro && <p className={fieldErrorClass}>{errors.intro.message}</p>}
               </div>
             </div>
@@ -371,17 +373,23 @@ export function DayForm({ topics, dayData, dayId }: { topics: { id: string; titl
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label>summary</Label>
-                <Textarea {...register("summary")} rows={2} />
+                <Controller control={control} name="summary" render={({ field }) => (
+                  <MarkdownEditor value={field.value} onChange={field.onChange} placeholder="Write a summary..." minRows={2} />
+                )} />
                 {errors.summary && <p className={fieldErrorClass}>{errors.summary.message}</p>}
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label>your notes</Label>
-                <Textarea {...register("notes")} rows={3} />
+                <Controller control={control} name="notes" render={({ field }) => (
+                  <MarkdownEditor value={field.value} onChange={field.onChange} placeholder="Write your notes..." minRows={3} />
+                )} />
                 {errors.notes && <p className={fieldErrorClass}>{errors.notes.message}</p>}
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label>optional hand-graded task</Label>
-                <Textarea {...register("task")} rows={2} />
+                <Controller control={control} name="task" render={({ field }) => (
+                  <MarkdownEditor value={field.value ?? ""} onChange={field.onChange} placeholder="Write the task prompt..." minRows={2} />
+                )} />
               </div>
             </div>
             <div className="hidden lg:block">
