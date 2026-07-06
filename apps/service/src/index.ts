@@ -10,4 +10,3 @@ const app = new Elysia()
   .get("/health", () => ({ ok: true }))
   .listen(process.env.PORT ?? 4000);
 
-console.log(`trice service listening on :${app.server?.port}`);

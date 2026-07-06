@@ -12,12 +12,7 @@ import { dailyDropEmail } from "@/email/templates/daily-drop";
 import { weeklyInsightsEmail } from "@/email/templates/weekly-insights";
 import { gradingNotificationEmail } from "@/email/templates/grading-notification";
 
-console.log("worker starting — env check:", {
-  DATABASE_URL: process.env.DATABASE_URL ? "set" : "MISSING",
-  REDIS_URL: process.env.REDIS_URL ? "set" : "MISSING",
-  RESEND_API_KEY: process.env.RESEND_API_KEY ? "set" : "MISSING",
-  WEB_URL: process.env.WEB_URL ? "set" : "MISSING",
-});
+
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -167,7 +162,6 @@ try {
       eq(emailSends.id, job.data.emailSendId),
     );
   });
-  console.log("bullmq email worker connected");
 } catch (err) {
   console.error("bullmq worker init failed:", err);
 }
@@ -217,8 +211,6 @@ const app = new Elysia()
           isNull(subscribers.unsubscribedAt),
         );
         if (activeSubscribers.length === 0) return;
-
-        console.log(`[weekly-insights] sending to ${activeSubscribers.length} subscriber(s) for week of ${weekStart.toISOString().split("T")[0]}`);
 
         for (const s of activeSubscribers) {
           const existing = await db.select().from(insightTokens).where(
@@ -294,4 +286,3 @@ const app = new Elysia()
     },
   }));
 
-console.log("trice worker started (email worker + cron scheduler)");
