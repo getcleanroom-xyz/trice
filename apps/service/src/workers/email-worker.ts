@@ -2,6 +2,7 @@ import { Worker } from "bullmq";
 import { Elysia } from "elysia";
 import { cron } from "@elysiajs/cron";
 import { eq, and, isNull, gte, lte } from "drizzle-orm";
+
 import { randomBytes } from "node:crypto";
 import { Resend } from "resend";
 import { connection, type EmailJob } from "@/queues/email-queue";
@@ -9,6 +10,7 @@ import { db, subscribers, days, emailSends, magicLinks, insightTokens, quizAttem
 import { confirmationEmail } from "@/email/templates/confirmation";
 import { dailyDropEmail } from "@/email/templates/daily-drop";
 import { weeklyInsightsEmail } from "@/email/templates/weekly-insights";
+import { gradingNotificationEmail } from "@/email/templates/grading-notification";
 
 console.log("worker starting — env check:", {
   DATABASE_URL: process.env.DATABASE_URL ? "set" : "MISSING",
@@ -68,6 +70,32 @@ try {
           title: day.title,
           slug: day.slug,
           url: `${process.env.WEB_URL}/day/${day.slug}?token=${token}`,
+        }),
+      });
+      if (error) throw new Error(error.message);
+    } else if (job.data.kind === "grading_notification") {
+      if (!job.data.dayId) return;
+      const attempt = (
+        await db.select().from(quizAttempts).where(
+          and(
+            eq(quizAttempts.subscriberId, subscriber.id),
+            eq(quizAttempts.dayId, job.data.dayId),
+          ),
+        )
+      )[0];
+      if (!attempt || !attempt.taskGrade) return;
+
+      const day = (await db.select().from(days).where(eq(days.id, attempt.dayId)))[0];
+      if (!day) return;
+
+      const { error } = await resend.emails.send({
+        from: "Trice <hello@emails.getcleanroom.xyz>",
+        to: subscriber.email,
+        subject: `Your task for day ${day.dayNumber} has been graded`,
+        html: gradingNotificationEmail({
+          dayTitle: day.title,
+          dayNumber: day.dayNumber,
+          grade: attempt.taskGrade,
         }),
       });
       if (error) throw new Error(error.message);
@@ -255,7 +283,7 @@ const app = new Elysia()
         for (const row of queued) {
           await emailQueue.add("send", {
             emailSendId: row.id,
-            kind: row.kind as "confirmation" | "daily_drop" | "weekly_insights",
+            kind: row.kind as "confirmation" | "daily_drop" | "weekly_insights" | "grading_notification",
             subscriberId: row.subscriberId,
             dayId: row.dayId ?? undefined,
           }, { jobId: row.id, attempts: 5, backoff: { type: "exponential", delay: 5000 } });

@@ -15,7 +15,7 @@ export const connection: ConnectionOptions = {
 
 export type EmailJob = {
   emailSendId: string;
-  kind: "confirmation" | "daily_drop" | "weekly_insights";
+  kind: "confirmation" | "daily_drop" | "weekly_insights" | "grading_notification";
   subscriberId: string;
   dayId?: string;
   insightTokenId?: string;

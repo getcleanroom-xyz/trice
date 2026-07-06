@@ -267,8 +267,19 @@ export async function listUngradedTasks() {
 }
 
 export async function gradeTask(attemptId: string, grade: string) {
+  const [attempt] = await db
+    .select({ subscriberId: quizAttempts.subscriberId, dayId: quizAttempts.dayId })
+    .from(quizAttempts)
+    .where(eq(quizAttempts.id, attemptId));
+
   await db
     .update(quizAttempts)
     .set({ taskGrade: grade })
     .where(eq(quizAttempts.id, attemptId));
+
+  if (attempt) {
+    await db.execute(
+      sql`INSERT INTO email_sends (subscriber_id, day_id, kind, status) VALUES (${attempt.subscriberId}, ${attempt.dayId}, 'grading_notification', 'queued')`,
+    );
+  }
 }

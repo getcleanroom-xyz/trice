@@ -12,6 +12,7 @@ export const days = pgTable("days", {
   id: uuid("id").primaryKey().defaultRandom(),
   slug: text("slug").notNull(),
   title: text("title").notNull(),
+  dayNumber: integer("day_number").notNull(),
   publishAt: timestamp("publish_at", { withTimezone: true }).notNull(),
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
 });
@@ -58,6 +59,8 @@ export const quizAttempts = pgTable("quiz_attempts", {
   dayId: uuid("day_id").notNull(),
   answers: text("answers").notNull(),
   score: integer("score").notNull(),
+  taskSubmission: text("task_submission"),
+  taskGrade: text("task_grade"),
   completedAt: timestamp("completed_at", { withTimezone: true }),
 });
 
