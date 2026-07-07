@@ -2,18 +2,17 @@ import { Elysia } from "elysia";
 import { cron } from "@elysiajs/cron";
 import { eq, and, isNull, gte, lte } from "drizzle-orm";
 import { db, days, subscribers, emailSends } from "@/db";
+import { emailQueue } from "@/queues/email-queue";
 
-// Two crons, each with a clear responsibility:
+// Three crons:
 //
-//  1. on-time-delivery — runs every 60 seconds. For each "live" day
-//     (publishAt <= now <= expiresAt), finds active subscribers who don't
-//     yet have an email_sends row and batch-inserts them. This is fully
-//     idempotent: re-running never creates duplicates, so it catches any
-//     window the previous run missed (crash, cold start, subscriber joined
-//     after initial send).
+//  1. on-time-delivery — every 60s. For each live day, finds subscribers
+//     without an email_sends row and batch-inserts them. Idempotent.
 //
-//  2. daily-drop — safety net at 7am WAT weekdays. Uses the same logic as
-//     on-time-delivery but as a backup in case the frequent cron was down.
+//  2. daily-drop — 7am WAT weekdays. Safety net with same logic.
+//
+//  3. poll-queued-emails — every 30s. Turns queued email_sends into BullMQ
+//     jobs so the worker can send them.
 export const dailyDropCron = new Elysia()
   .use(
     cron({
@@ -100,6 +99,36 @@ export const dailyDropCron = new Elysia()
           );
         } catch (err) {
           console.error("daily-drop cron failed:", err);
+        }
+      },
+    }),
+  )
+  .use(
+    cron({
+      name: "poll-queued-emails",
+      pattern: "*/30 * * * * *",
+      async run() {
+        try {
+          const queued = await db
+            .select()
+            .from(emailSends)
+            .where(eq(emailSends.status, "queued"))
+            .limit(500);
+
+          for (const row of queued) {
+            await emailQueue.add(
+              "send",
+              {
+                emailSendId: row.id,
+                kind: row.kind as "confirmation" | "daily_drop" | "weekly_insights" | "grading_notification",
+                subscriberId: row.subscriberId,
+                dayId: row.dayId ?? undefined,
+              },
+              { jobId: row.id, attempts: 5, backoff: { type: "exponential", delay: 5000 } },
+            );
+          }
+        } catch (err) {
+          console.error("poll-queued-emails cron failed:", err);
         }
       },
     }),
