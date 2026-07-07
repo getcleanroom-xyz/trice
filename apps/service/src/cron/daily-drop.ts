@@ -1,6 +1,6 @@
 import { Elysia } from "elysia";
 import { cron } from "@elysiajs/cron";
-import { eq, and, isNull, gte, lte } from "drizzle-orm";
+import { eq, and, desc, isNull, gte, lte } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
 import { db, days, subscribers, emailSends, insightTokens } from "@/db";
 import { emailQueue } from "@/queues/email-queue";
@@ -192,16 +192,42 @@ export const dailyDropCron = new Elysia()
             .limit(500);
 
           for (const row of queued) {
-            await emailQueue.add(
-              "send",
-              {
-                emailSendId: row.id,
-                kind: row.kind as "confirmation" | "daily_drop" | "weekly_insights" | "grading_notification",
-                subscriberId: row.subscriberId,
-                dayId: row.dayId ?? undefined,
-              },
-              { jobId: row.id, attempts: 5, backoff: { type: "exponential", delay: 5000 } },
-            );
+            const base = {
+              emailSendId: row.id,
+              subscriberId: row.subscriberId,
+              dayId: row.dayId ?? undefined,
+            };
+
+            if (row.kind === "weekly_insights") {
+              const tokens = await db
+                .select()
+                .from(insightTokens)
+                .where(eq(insightTokens.subscriberId, row.subscriberId))
+                .orderBy(desc(insightTokens.weekStart))
+                .limit(1);
+              const insightToken = tokens[0];
+              if (!insightToken) continue;
+
+              await emailQueue.add(
+                "send",
+                {
+                  ...base,
+                  kind: "weekly_insights",
+                  insightTokenId: insightToken.id,
+                  weekStart: insightToken.weekStart.toISOString().split("T")[0],
+                },
+                { jobId: row.id, attempts: 5, backoff: { type: "exponential", delay: 5000 } },
+              );
+            } else {
+              await emailQueue.add(
+                "send",
+                {
+                  ...base,
+                  kind: row.kind as "confirmation" | "daily_drop" | "grading_notification",
+                },
+                { jobId: row.id, attempts: 5, backoff: { type: "exponential", delay: 5000 } },
+              );
+            }
           }
         } catch (err) {
           console.error("poll-queued-emails cron failed:", err);
