@@ -414,7 +414,7 @@ export function DayForm({ topics, dayData, dayId, dayNumberSuggestions }: { topi
           <div className="grid grid-cols-1 lg:grid-cols-[1fr,320px] gap-6">
             <div className="flex flex-col gap-5">
               <div className="flex flex-col gap-3 rounded-sm border border-border p-4">
-                <QuestionsDnd questionsArray={questionsArray} control={control} register={register} errors={errors} getValues={getValues} setValue={setValue} fieldErrorClass={fieldErrorClass} />
+                <QuestionsDnd questionsArray={questionsArray} control={control} register={register} errors={errors} getValues={getValues} fieldErrorClass={fieldErrorClass} />
                 {errors.questions && !Array.isArray(errors.questions) && (
                   <p className={fieldErrorClass}>{errors.questions.message}</p>
                 )}
