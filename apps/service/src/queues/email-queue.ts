@@ -2,8 +2,7 @@ import { Queue, type ConnectionOptions } from "bullmq";
 
 const redisUrl = new URL(process.env.REDIS_URL ?? "redis://localhost:6379");
 
-const isLocal = ["localhost", "127.0.0.1", "redis"].includes(redisUrl.hostname);
-const useTls = redisUrl.protocol === "rediss:" || !isLocal;
+const useTls = redisUrl.protocol === "rediss:";
 
 export const connection: ConnectionOptions = {
   host: redisUrl.hostname,
