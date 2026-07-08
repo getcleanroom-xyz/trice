@@ -48,8 +48,6 @@ export function DraggableTopicList({
   const [local, setLocal] = useState(topics);
   const [confirmId, setConfirmId] = useState<string | null>(null);
 
-  if (local !== topics) setLocal(topics);
-
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (!over || active.id === over.id) return;

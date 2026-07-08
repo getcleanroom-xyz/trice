@@ -78,7 +78,6 @@ export default async function AdminPage({
             totalPages={daysResult.totalPages}
             q={q}
             sort={sort}
-            topicId={topic}
             onReorder={handleReorderDays}
           />
         </>

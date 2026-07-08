@@ -86,17 +86,15 @@ function SortableDay({ day, onDelete }: { day: Day; onDelete: (id: string) => vo
 }
 
 export function DraggableDayList({
-  days, total, page, totalPages, q, sort, topicId, onReorder,
+  days, total, page, totalPages, q, sort, onReorder,
 }: {
-  days: Day[]; total: number; page: number; totalPages: number; q?: string; sort?: string; topicId?: string;
+  days: Day[]; total: number; page: number; totalPages: number; q?: string; sort?: string;
   onReorder: (ids: string[]) => void;
 }) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const [local, setLocal] = useState(days);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   useAdminKeyboard();
-
-  if (local !== days) setLocal(days);
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -108,8 +106,6 @@ export function DraggableDayList({
     setLocal(next);
     onReorder(next.map((d) => d.id));
   }
-
-  const enableDnd = !!topicId;
 
   return (
     <section>
@@ -129,37 +125,11 @@ export function DraggableDayList({
           />
         </div>
       </div>
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={enableDnd ? handleDragEnd : () => {}}>
-        <SortableContext items={enableDnd ? local.map((d) => d.id) : []} strategy={verticalListSortingStrategy}>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={local.map((d) => d.id)} strategy={verticalListSortingStrategy}>
           <div className="divide-y divide-border rounded-sm border border-border">
             {local.map((d) => (
-              enableDnd ? (
-                <SortableDay key={d.id} day={d} onDelete={(id) => setConfirmId(id)} />
-              ) : (
-                <div key={d.id} className="flex items-center justify-between p-3 text-sm gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-secondary font-mono text-xs text-muted-foreground">
-                      {d.dayNumber}
-                    </div>
-                    <span className="text-foreground truncate">{d.title}</span>
-                    <span className={cn("inline-flex items-center gap-1 font-mono text-[10px] px-1.5 py-0.5 rounded-full", {
-                      "bg-green-500/10 text-green-400": (() => { const s = getStatus(d.expiresAt, d.publishAt, Date.now()); return s === "live"; })(),
-                      "bg-muted-foreground/10 text-muted-foreground": (() => { const s = getStatus(d.expiresAt, d.publishAt, Date.now()); return s === "expired"; })(),
-                      "bg-yellow-500/10 text-yellow-400": (() => { const s = getStatus(d.expiresAt, d.publishAt, Date.now()); return s === "scheduled"; })(),
-                    })}>
-                      <span className={cn("h-1.5 w-1.5 rounded-full", (() => { const s = getStatus(d.expiresAt, d.publishAt, Date.now()); return STATUS_STYLES[s].dot; })())} />
-                      {(() => { const s = getStatus(d.expiresAt, d.publishAt, Date.now()); return STATUS_STYLES[s].label; })()}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Link href={`/day/${d.slug}`} target="_blank" className="text-muted-foreground hover:text-foreground"><ExternalLink className="h-3.5 w-3.5" /></Link>
-                    <Link href={`/admin/days/${d.id}/edit`} className="text-muted-foreground hover:text-foreground"><Pencil className="h-3.5 w-3.5" /></Link>
-                    {(() => { const s = getStatus(d.expiresAt, d.publishAt, Date.now()); return canDelete(s, d.publishAt); })() && (
-                      <button onClick={() => setConfirmId(d.id)} className="text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>
-                    )}
-                  </div>
-                </div>
-              )
+              <SortableDay key={d.id} day={d} onDelete={(id) => setConfirmId(id)} />
             ))}
             {local.length === 0 && (
               <p className="p-3 text-sm text-muted-foreground">{q ? "No days match your search." : "No days yet."}</p>
