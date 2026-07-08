@@ -5,28 +5,11 @@ import { randomBytes } from "node:crypto";
 import { db } from "@/lib/db/client";
 import { subscribers, days, magicLinks, emailSends } from "@/lib/db/schema";
 import { and, eq, lte, gte, desc } from "drizzle-orm";
-import { Resend } from "resend";
+import { getResend, dailyDropHtml } from "@/lib/email";
 
 const schema = z.object({ email: z.string().trim().email() });
 
-const resend = new Resend(process.env.RESEND_API_KEY!);
-
 export type RequestLinkState = { ok: boolean; error?: string };
-
-function dailyDropHtml({ title, url }: { title: string; url: string }) {
-  return `<div style="background:#16130E;color:#E8DFC8;font-family:'Work Sans',sans-serif;padding:36px 34px;">
-    <div style="font-family:Georgia,serif;font-style:italic;font-size:18px;color:#ECE0C8;margin-bottom:32px;">Trice</div>
-    <p style="font-family:monospace;font-size:10px;letter-spacing:0.05em;color:#B98A46;margin:0 0 8px;">today's card</p>
-    <p style="font-family:Georgia,serif;font-size:22px;line-height:1.35;color:#F1E9D6;margin:0 0 18px;">${title}</p>
-    <p style="font-size:13px;line-height:1.7;color:#8C816A;margin:0 0 26px;">
-      Ten minutes to watch, five to prove you did. This link works until midnight
-      tonight &mdash; after that it's filed away.
-    </p>
-    <a href="${url}" style="display:inline-block;border:1px solid #B98A46;color:#ECE0C8;font-family:monospace;font-size:12px;padding:11px 22px;border-radius:2px;text-decoration:none;">
-      Open today's card &rarr;
-    </a>
-  </div>`;
-}
 
 export async function requestLink(
   _prev: RequestLinkState,
@@ -59,7 +42,7 @@ export async function requestLink(
     expiresAt: today.expiresAt,
   });
 
-  const { error } = await resend.emails.send({
+  const { error } = await getResend().emails.send({
     from: "Trice <hello@emails.getcleanroom.xyz>",
     to: subscriber.email,
     subject: `Day ${today.title}`,

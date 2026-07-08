@@ -5,7 +5,7 @@ import { db } from "@/lib/db/client";
 import { topics, days, quizQuestions, quizTasks, quizAttempts, subscribers, emailSends } from "@/lib/db/schema";
 import { eq, or, like, desc, asc, sql, count, inArray } from "drizzle-orm";
 import { redirect } from "next/navigation";
-import { Resend } from "resend";
+import { getResend, gradingNotificationHtml } from "@/lib/email";
 
 const dayQuestionSchema = z.object({
   prompt: z.string().min(1),
@@ -267,8 +267,6 @@ export async function listUngradedTasks() {
   }));
 }
 
-const resend = new Resend(process.env.RESEND_API_KEY!);
-
 export async function gradeTask(attemptId: string, grade: string) {
   const [attempt] = await db
     .select({ subscriberId: quizAttempts.subscriberId, dayId: quizAttempts.dayId })
@@ -294,19 +292,11 @@ export async function gradeTask(attemptId: string, grade: string) {
 
   if (!subscriber || !day) return;
 
-  const { error } = await resend.emails.send({
+  const { error } = await getResend().emails.send({
     from: "Trice <hello@emails.getcleanroom.xyz>",
     to: subscriber.email,
     subject: `Your task for day ${day.dayNumber} has been graded`,
-    html: `<div style="background:#16130E;color:#E8DFC8;font-family:'Work Sans',sans-serif;padding:36px 34px;">
-      <div style="font-family:Georgia,serif;font-style:italic;font-size:18px;color:#ECE0C8;margin-bottom:32px;">Trice</div>
-      <p style="font-family:monospace;font-size:10px;letter-spacing:0.05em;color:#B98A46;margin:0 0 8px;">day ${day.dayNumber} · task graded</p>
-      <p style="font-family:Georgia,serif;font-size:21px;line-height:1.4;color:#F1E9D6;margin:0 0 18px;">Your task for ${day.title} has been reviewed.</p>
-      <div style="border:1px solid rgba(236,227,208,0.14);border-radius:3px;padding:16px 18px;margin-bottom:24px;">
-        <div style="font-family:monospace;font-size:10px;letter-spacing:0.05em;color:#B98A46;margin-bottom:6px;">feedback</div>
-        <div style="font-family:Georgia,serif;font-size:16px;line-height:1.5;color:#F1E9D6;">${grade}</div>
-      </div>
-    </div>`,
+    html: gradingNotificationHtml({ dayNumber: day.dayNumber, dayTitle: day.title, grade }),
   });
 
   await db.insert(emailSends).values({
