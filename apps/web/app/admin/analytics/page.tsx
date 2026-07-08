@@ -22,7 +22,7 @@ async function getStats() {
   const quizTotal = await db.select({ v: count() }).from(quizAttempts).then(r => r[0].v);
   const gradedTasks = await db.select({ v: count() }).from(quizAttempts).where(sql`${quizAttempts.taskGrade} IS NOT NULL`).then(r => r[0].v);
 
-  const streaks: { range: string; subquery: ReturnType<typeof db.select<{v: number}>> }[] = [
+  const streaks: { range: string; subquery: Promise<{ v: number }[]> }[] = [
     { range: "≥ 1 day", subquery: db.select({ v: count() }).from(subscribers).where(sql`${subscribers.currentStreak} >= 1`) },
     { range: "≥ 7 days", subquery: db.select({ v: count() }).from(subscribers).where(sql`${subscribers.currentStreak} >= 7`) },
     { range: "≥ 30 days", subquery: db.select({ v: count() }).from(subscribers).where(sql`${subscribers.currentStreak} >= 30`) },
