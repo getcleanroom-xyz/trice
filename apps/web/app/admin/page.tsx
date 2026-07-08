@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db/client";
 import { topics as topicsTable } from "@/lib/db/schema";
