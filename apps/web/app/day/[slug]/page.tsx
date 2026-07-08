@@ -2,8 +2,8 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db/client";
-import { days, quizQuestions, quizTasks } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { days, quizQuestions, quizTasks, quizAttempts } from "@/lib/db/schema";
+import { eq, and } from "drizzle-orm";
 import { validateMagicLink } from "@/lib/auth/magic-link";
 import { verifyAdminSessionCookie, ADMIN_COOKIE_NAME } from "@/lib/admin/session";
 import { StampBadge } from "@/components/stamp-badge";
@@ -46,6 +46,34 @@ export default async function DayPage({
     where: eq(quizTasks.dayId, day.id),
   });
 
+  const existingAttempt = subscriberId !== "admin"
+    ? await db.query.quizAttempts.findFirst({
+        where: and(
+          eq(quizAttempts.subscriberId, subscriberId),
+          eq(quizAttempts.dayId, day.id),
+        ),
+      })
+    : null;
+
+  let existingResult: {
+    score: number;
+    total: number;
+    results: { prompt: string; choices: string[]; correctIndex: number; chosenIndex: number; correct: boolean }[];
+    taskGrade?: string | null;
+  } | null = null;
+
+  if (existingAttempt) {
+    const results = questions.map((q, i) => ({
+      prompt: q.prompt,
+      choices: q.choices,
+      correctIndex: q.correctIndex,
+      chosenIndex: existingAttempt.answers[i] ?? -1,
+      correct: existingAttempt.answers[i] === q.correctIndex,
+    }));
+    const score = results.filter((r) => r.correct).length;
+    existingResult = { score, total: questions.length, results, taskGrade: existingAttempt.taskGrade };
+  }
+
   return (
     <main className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-4 sm:py-6 pb-16 sm:pb-24">
       <header className="mb-4 flex items-center justify-between">
@@ -73,6 +101,7 @@ export default async function DayPage({
           choices: q.choices,
         }))}
         task={quizTask?.prompt}
+        existingResult={existingResult}
       />
     </main>
   );

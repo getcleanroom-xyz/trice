@@ -17,17 +17,24 @@ export function ClosingPage({
   dayId,
   questions,
   task,
+  existingResult,
 }: {
   subscriberId: string;
   dayId: string;
   questions: Question[];
   task?: string;
+  existingResult?: {
+    score: number;
+    total: number;
+    results: ResultItem[];
+    taskGrade?: string | null;
+  } | null;
 }) {
   const [started, setStarted] = useState(false);
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
   const [taskSubmission, setTaskSubmission] = useState("");
-  const [result, setResult] = useState<{ score: number; total: number; results: ResultItem[]; taskGrade?: string | null } | null>(null);
+  const [result, setResult] = useState<{ score: number; total: number; results: ResultItem[]; taskGrade?: string | null } | null>(existingResult ?? null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 

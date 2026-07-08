@@ -26,6 +26,7 @@ export function DailyContent({
   dayId,
   questions,
   task,
+  existingResult,
 }: {
   title: string;
   videoUrls: string[];
@@ -38,6 +39,12 @@ export function DailyContent({
   dayId: string;
   questions: Question[];
   task?: string;
+  existingResult?: {
+    score: number;
+    total: number;
+    results: { prompt: string; choices: string[]; correctIndex: number; chosenIndex: number; correct: boolean }[];
+    taskGrade?: string | null;
+  } | null;
 }) {
   const [showQuiz, setShowQuiz] = useState(false);
   const [learningGoalMet, setLearningGoalMet] = useState(false);
@@ -107,8 +114,8 @@ export function DailyContent({
         tabs: <InfoTabs intro={intro} objectives={objectives} summary={summary} />,
         quiz: (
           <div ref={quizRef} className="h-full">
-            {showQuiz ? (
-              <ClosingPage subscriberId={subscriberId} dayId={dayId} questions={questions} task={task} />
+            {showQuiz || existingResult ? (
+              <ClosingPage subscriberId={subscriberId} dayId={dayId} questions={questions} task={task} existingResult={existingResult} />
             ) : (
               <div className="flex h-full flex-col items-center justify-center p-6 text-center">
                 <p className="mb-1 font-mono text-[10px] tracking-widest text-primary/70 uppercase">

@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db/client";
 import { quizQuestions, quizAttempts } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 export async function submitQuiz(
   subscriberId: string,
@@ -34,6 +34,17 @@ export async function submitQuiz(
         target: [quizAttempts.subscriberId, quizAttempts.dayId],
         set: { answers, score, taskSubmission },
       });
+
+    const [attempt] = await db
+      .select({ taskGrade: quizAttempts.taskGrade })
+      .from(quizAttempts)
+      .where(
+        and(
+          eq(quizAttempts.subscriberId, subscriberId),
+          eq(quizAttempts.dayId, dayId),
+        ),
+      );
+    taskGrade = attempt?.taskGrade ?? null;
   }
 
   return { score, total: questions.length, results, taskGrade };

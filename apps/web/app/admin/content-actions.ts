@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { db } from "@/lib/db/client";
 import { topics, days, quizQuestions, quizTasks, quizAttempts, subscribers, emailSends } from "@/lib/db/schema";
-import { eq, or, like, desc, asc, sql, count, inArray } from "drizzle-orm";
+import { eq, or, like, desc, asc, sql, count, inArray, isNotNull } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { getResend, gradingNotificationHtml } from "@/lib/email";
 
@@ -233,7 +233,7 @@ export async function deleteDay(formData: FormData) {
 
 export async function listUngradedTasks() {
   const attempts = await db.query.quizAttempts.findMany({
-    where: sql`${quizAttempts.taskSubmission} IS NOT NULL`,
+    where: isNotNull(quizAttempts.taskSubmission),
     orderBy: desc(quizAttempts.completedAt),
   });
 
