@@ -20,55 +20,57 @@ function getLastWeekBounds(): { start: Date; end: Date } {
 export async function dailyDropRun() {
   try {
     const now = new Date();
-    const openDay = (
-      await db
-        .select({ id: days.id, expiresAt: days.expiresAt })
-        .from(days)
-        .where(and(lte(days.publishAt, now), gte(days.expiresAt, now)))
-        .limit(1)
-    )[0];
-    if (!openDay) {
+    const openDays = await db
+      .select({ id: days.id, expiresAt: days.expiresAt })
+      .from(days)
+      .where(and(lte(days.publishAt, now), gte(days.expiresAt, now)));
+
+    if (openDays.length === 0) {
       console.log("[cron] daily-drop: no open day found");
       return;
     }
 
-    const missing = await db
-      .select({ id: subscribers.id })
-      .from(subscribers)
-      .leftJoin(
-        emailSends,
-        and(
-          eq(emailSends.subscriberId, subscribers.id),
-          eq(emailSends.dayId, openDay.id),
-        ),
-      )
-      .where(and(isNull(subscribers.unsubscribedAt), isNull(emailSends.id)));
+    console.log("[cron] daily-drop: found", openDays.length, "open day(s)");
 
-    if (missing.length === 0) {
-      console.log("[cron] daily-drop: day", openDay.id, "already sent to all subscribers");
-      return;
-    }
+    for (const openDay of openDays) {
+      const missing = await db
+        .select({ id: subscribers.id })
+        .from(subscribers)
+        .leftJoin(
+          emailSends,
+          and(
+            eq(emailSends.subscriberId, subscribers.id),
+            eq(emailSends.dayId, openDay.id),
+          ),
+        )
+        .where(and(isNull(subscribers.unsubscribedAt), isNull(emailSends.id)));
 
-    console.log("[cron] daily-drop: found", missing.length, "subscribers to notify for day", openDay.id);
+      if (missing.length === 0) {
+        console.log("[cron] daily-drop: day", openDay.id, "already sent to all subscribers");
+        continue;
+      }
 
-    for (const s of missing) {
-      const [emailSend] = await db.insert(emailSends).values({
-        subscriberId: s.id,
-        dayId: openDay.id,
-        kind: "daily_drop",
-        status: "queued",
-      }).returning();
+      console.log("[cron] daily-drop: found", missing.length, "subscriber(s) to notify for day", openDay.id);
 
-      await emailQueue.add(
-        "send",
-        {
-          emailSendId: emailSend.id,
-          kind: "daily_drop",
+      for (const s of missing) {
+        const [emailSend] = await db.insert(emailSends).values({
           subscriberId: s.id,
           dayId: openDay.id,
-        },
-        { jobId: emailSend.id, attempts: 5, backoff: { type: "exponential", delay: 5000 } },
-      );
+          kind: "daily_drop",
+          status: "queued",
+        }).returning();
+
+        await emailQueue.add(
+          "send",
+          {
+            emailSendId: emailSend.id,
+            kind: "daily_drop",
+            subscriberId: s.id,
+            dayId: openDay.id,
+          },
+          { jobId: emailSend.id, attempts: 5, backoff: { type: "exponential", delay: 5000 } },
+        );
+      }
     }
   } catch (err) {
     console.error("[cron] daily-drop failed:", err);
