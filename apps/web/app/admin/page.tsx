@@ -28,7 +28,7 @@ export default async function AdminPage({
 
   const [topicsResult, daysResult] = await Promise.all([
     listTopics({ q, page: showTopics ? pageNum : 1 }),
-    listDays({ q, sort, page: showTopics ? 1 : pageNum }),
+    listDays({ q, sort, page: showTopics ? 1 : pageNum, topic }),
   ]);
 
   const allTopics = await db.query.topics.findMany({ orderBy: asc(topicsTable.sortOrder) });

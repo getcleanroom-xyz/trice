@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { db } from "@/lib/db/client";
 import { topics, days, quizQuestions, quizTasks, quizAttempts, subscribers, emailSends } from "@/lib/db/schema";
-import { eq, or, like, desc, asc, sql, count, inArray, isNotNull } from "drizzle-orm";
+import { eq, and, or, like, desc, asc, sql, count, inArray, isNotNull } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { getResend, gradingNotificationHtml } from "@/lib/email";
 
@@ -158,11 +158,13 @@ export async function listTopics(opts: { q?: string; page?: number; pageSize?: n
   return { data, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
 }
 
-export async function listDays(opts: { q?: string; sort?: string; page?: number; pageSize?: number } = {}) {
-  const { q, sort = "date", page = 1, pageSize = 20 } = opts;
+export async function listDays(opts: { q?: string; sort?: string; page?: number; pageSize?: number; topic?: string } = {}) {
+  const { q, sort = "date", page = 1, pageSize = 20, topic } = opts;
   const offset = (page - 1) * pageSize;
 
   const conditions = q ? or(like(days.title, `%${q}%`), sql`cast(${days.dayNumber} as text) like ${"%" + q + "%"}`) : undefined;
+  const topicCondition = topic ? eq(days.topicId, topic) : undefined;
+  const where = and(conditions, topicCondition);
 
   const orderBy =
     sort === "title" ? asc(days.title)
@@ -170,8 +172,8 @@ export async function listDays(opts: { q?: string; sort?: string; page?: number;
     : desc(days.publishAt);
 
   const [data, [{ total }]] = await Promise.all([
-    db.query.days.findMany({ where: conditions, orderBy, limit: pageSize, offset }),
-    db.select({ total: count() }).from(days).where(conditions),
+    db.query.days.findMany({ where, orderBy, limit: pageSize, offset }),
+    db.select({ total: count() }).from(days).where(where),
   ]);
 
   return { data, total, page, pageSize, totalPages: Math.ceil(total / pageSize) };
