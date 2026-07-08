@@ -27,7 +27,10 @@ export async function dailyDropRun() {
         .where(and(lte(days.publishAt, now), gte(days.expiresAt, now)))
         .limit(1)
     )[0];
-    if (!openDay) return;
+    if (!openDay) {
+      console.log("[cron] daily-drop: no open day found");
+      return;
+    }
 
     const missing = await db
       .select({ id: subscribers.id })
@@ -41,7 +44,12 @@ export async function dailyDropRun() {
       )
       .where(and(isNull(subscribers.unsubscribedAt), isNull(emailSends.id)));
 
-    if (missing.length === 0) return;
+    if (missing.length === 0) {
+      console.log("[cron] daily-drop: day", openDay.id, "already sent to all subscribers");
+      return;
+    }
+
+    console.log("[cron] daily-drop: found", missing.length, "subscribers to notify for day", openDay.id);
 
     for (const s of missing) {
       const [emailSend] = await db.insert(emailSends).values({
@@ -63,7 +71,7 @@ export async function dailyDropRun() {
       );
     }
   } catch (err) {
-    console.error("daily-drop cron failed:", err);
+    console.error("[cron] daily-drop failed:", err);
   }
 }
 
