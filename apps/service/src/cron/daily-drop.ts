@@ -5,18 +5,6 @@ import { randomBytes } from "node:crypto";
 import { db, days, subscribers, emailSends, insightTokens } from "@/db";
 import { emailQueue } from "@/queues/email-queue";
 
-// Four crons:
-//
-//  1. on-time-delivery — every 60s. For each live day, finds subscribers
-//     without an email_sends row and batch-inserts them. Idempotent.
-//
-//  2. daily-drop — 7am WAT weekdays. Safety net with same logic.
-//
-//  3. weekly-insights — 8pm WAT Sundays. Creates insight tokens and queues
-//     weekly summary emails for active subscribers.
-//
-//  4. poll-queued-emails — every 30s. Turns queued email_sends into BullMQ
-//     jobs so the worker can send them.
 function getLastWeekBounds(): { start: Date; end: Date } {
   const now = new Date();
   const dayOfWeek = now.getDay();
@@ -34,50 +22,6 @@ function getLastWeekBounds(): { start: Date; end: Date } {
 export const dailyDropCron = new Elysia()
   .use(
     cron({
-      name: "on-time-delivery",
-      pattern: "* * * * *",
-      async run() {
-        try {
-          const now = new Date();
-          const liveDays = await db
-            .select({ id: days.id })
-            .from(days)
-            .where(and(lte(days.publishAt, now), gte(days.expiresAt, now)));
-
-          if (liveDays.length === 0) return;
-
-          for (const day of liveDays) {
-            const missing = await db
-              .select({ id: subscribers.id })
-              .from(subscribers)
-              .leftJoin(
-                emailSends,
-                and(
-                  eq(emailSends.subscriberId, subscribers.id),
-                  eq(emailSends.dayId, day.id),
-                ),
-              )
-              .where(and(isNull(subscribers.unsubscribedAt), isNull(emailSends.id)));
-
-            if (missing.length === 0) continue;
-
-            await db.insert(emailSends).values(
-              missing.map((s) => ({
-                subscriberId: s.id,
-                dayId: day.id,
-                kind: "daily_drop" as const,
-                status: "queued" as const,
-              })),
-            );
-          }
-        } catch (err) {
-          console.error("on-time-delivery cron failed:", err);
-        }
-      },
-    }),
-  )
-  .use(
-    cron({
       name: "daily-drop",
       pattern: "0 7 * * 1-5",
       timezone: "Africa/Lagos",
@@ -86,7 +30,7 @@ export const dailyDropCron = new Elysia()
           const now = new Date();
           const openDay = (
             await db
-              .select({ id: days.id })
+              .select({ id: days.id, expiresAt: days.expiresAt })
               .from(days)
               .where(and(lte(days.publishAt, now), gte(days.expiresAt, now)))
               .limit(1)
@@ -107,14 +51,25 @@ export const dailyDropCron = new Elysia()
 
           if (missing.length === 0) return;
 
-          await db.insert(emailSends).values(
-            missing.map((s) => ({
+          for (const s of missing) {
+            const [emailSend] = await db.insert(emailSends).values({
               subscriberId: s.id,
               dayId: openDay.id,
-              kind: "daily_drop" as const,
-              status: "queued" as const,
-            })),
-          );
+              kind: "daily_drop",
+              status: "queued",
+            }).returning();
+
+            await emailQueue.add(
+              "send",
+              {
+                emailSendId: emailSend.id,
+                kind: "daily_drop",
+                subscriberId: s.id,
+                dayId: openDay.id,
+              },
+              { jobId: emailSend.id, attempts: 5, backoff: { type: "exponential", delay: 5000 } },
+            );
+          }
         } catch (err) {
           console.error("daily-drop cron failed:", err);
         }
@@ -179,69 +134,3 @@ export const dailyDropCron = new Elysia()
       },
     }),
   )
-  .use(
-    cron({
-      name: "poll-queued-emails",
-      pattern: "*/30 * * * * *",
-      async run() {
-        try {
-          const queued = await db
-            .select()
-            .from(emailSends)
-            .where(eq(emailSends.status, "queued"))
-            .limit(500);
-
-          const now = new Date();
-          for (const row of queued) {
-            const base = {
-              emailSendId: row.id,
-              subscriberId: row.subscriberId,
-              dayId: row.dayId ?? undefined,
-            };
-
-            if (row.kind === "daily_drop" && row.dayId) {
-              const day = (await db.select().from(days).where(eq(days.id, row.dayId)))[0];
-              if (!day || day.expiresAt < now) {
-                await db.update(emailSends).set({ status: "failed" }).where(eq(emailSends.id, row.id));
-                continue;
-              }
-            }
-
-            if (row.kind === "weekly_insights") {
-              const tokens = await db
-                .select()
-                .from(insightTokens)
-                .where(eq(insightTokens.subscriberId, row.subscriberId))
-                .orderBy(desc(insightTokens.weekStart))
-                .limit(1);
-              const insightToken = tokens[0];
-              if (!insightToken) continue;
-
-              await emailQueue.add(
-                "send",
-                {
-                  ...base,
-                  kind: "weekly_insights",
-                  insightTokenId: insightToken.id,
-                  weekStart: insightToken.weekStart.toISOString().split("T")[0],
-                },
-                { jobId: row.id, attempts: 5, backoff: { type: "exponential", delay: 5000 } },
-              );
-            } else {
-              await emailQueue.add(
-                "send",
-                {
-                  ...base,
-                  kind: row.kind as "confirmation" | "daily_drop" | "grading_notification",
-                },
-                { jobId: row.id, attempts: 5, backoff: { type: "exponential", delay: 5000 } },
-              );
-            }
-          }
-        } catch (err) {
-          console.error("poll-queued-emails cron failed:", err);
-        }
-      },
-    }),
-  )
-
