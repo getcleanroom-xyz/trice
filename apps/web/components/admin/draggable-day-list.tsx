@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Trash2, ExternalLink, Pencil, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
@@ -90,17 +89,16 @@ export function DraggableDayList({
   days, total, page, totalPages, q, sort, topicId, onReorder,
 }: {
   days: Day[]; total: number; page: number; totalPages: number; q?: string; sort?: string; topicId?: string;
-  onReorder: (ids: string[]) => Promise<void> | void;
+  onReorder: (ids: string[]) => void;
 }) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
-  const router = useRouter();
   const [local, setLocal] = useState(days);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   useAdminKeyboard();
 
   if (local !== days) setLocal(days);
 
-  async function handleDragEnd(event: DragEndEvent) {
+  function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     const oldIdx = local.findIndex((d) => d.id === active.id);
@@ -108,8 +106,7 @@ export function DraggableDayList({
     const next = [...local];
     next.splice(newIdx, 0, next.splice(oldIdx, 1)[0]);
     setLocal(next);
-    await onReorder(next.map((d) => d.id));
-    router.refresh();
+    onReorder(next.map((d) => d.id));
   }
 
   const enableDnd = !!topicId;

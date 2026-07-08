@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Trash2, Pencil, GripVertical } from "lucide-react";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
@@ -43,16 +42,15 @@ export function DraggableTopicList({
   topics, total, page, totalPages, q, onReorder,
 }: {
   topics: Topic[]; total: number; page: number; totalPages: number; q?: string;
-  onReorder: (ids: string[]) => Promise<void> | void;
+  onReorder: (ids: string[]) => void;
 }) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
-  const router = useRouter();
   const [local, setLocal] = useState(topics);
   const [confirmId, setConfirmId] = useState<string | null>(null);
 
   if (local !== topics) setLocal(topics);
 
-  async function handleDragEnd(event: DragEndEvent) {
+  function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     const oldIdx = local.findIndex((t) => t.id === active.id);
@@ -60,8 +58,7 @@ export function DraggableTopicList({
     const next = [...local];
     next.splice(newIdx, 0, next.splice(oldIdx, 1)[0]);
     setLocal(next);
-    await onReorder(next.map((t) => t.id));
-    router.refresh();
+    onReorder(next.map((t) => t.id));
   }
 
   return (
