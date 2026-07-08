@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { AppHeader } from "@/components/app-header";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -37,7 +37,7 @@ export default function TipPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-4 sm:px-6 text-center">
-      <Link href="/" className="mb-10 font-serif text-lg italic text-foreground hover:text-primary">Trice</Link>
+      <AppHeader className="mb-10" />
       <h1 className="mb-2 font-serif text-xl sm:text-2xl text-foreground">
         Buy tomorrow&rsquo;s card a coffee
       </h1>

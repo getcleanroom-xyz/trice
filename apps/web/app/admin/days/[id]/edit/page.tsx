@@ -3,6 +3,7 @@ import { db } from "@/lib/db/client";
 import { quizTasks } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { getDay, getDayQuestions, listTopics } from "@/app/admin/content-actions";
+import { AppHeader } from "@/components/app-header";
 import { DayForm } from "@/components/admin/day-form";
 
 function pad(n: number) { return String(n).padStart(2, "0"); }
@@ -48,11 +49,7 @@ export default async function EditDayPage({ params }: { params: Promise<{ id: st
 
   return (
     <main className="mx-auto max-w-2xl px-4 sm:px-6 py-8 sm:py-12">
-      <span className="mb-8 block font-serif text-lg italic">
-        <a href="/" className="hover:text-primary">Trice</a>{" "}
-        / <a href="/admin" className="hover:text-primary">admin</a>{" "}
-        / edit day
-      </span>
+      <AppHeader breadcrumbs={[{ href: "/admin", label: "admin" }, { label: "edit day" }]} />
       <h1 className="mb-6 font-serif text-2xl text-foreground">Edit day</h1>
       <DayForm topics={topics.map((t) => ({ id: t.id, title: t.title }))} dayData={dayData} dayId={day.id} />
     </main>

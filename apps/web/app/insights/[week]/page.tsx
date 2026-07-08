@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import { db } from "@/lib/db/client";
 import { insightTokens, quizQuestions } from "@/lib/db/schema";
 import { eq, inArray } from "drizzle-orm";
 import { getWeeklyInsights, type WeekInsights } from "@/lib/insights/weekly";
+import { AppHeader } from "@/components/app-header";
 import { Check, X, Minus } from "lucide-react";
 
 function formatDate(d: Date): string {
@@ -111,11 +111,7 @@ export default async function InsightsPage({
 
   return (
     <main className="mx-auto max-w-2xl px-4 sm:px-6 py-10 sm:py-14">
-      <nav className="mb-10 sm:mb-14 flex items-center justify-between">
-        <Link href="/" className="font-serif text-lg italic text-foreground hover:text-primary transition-colors">
-          Trice
-        </Link>
-      </nav>
+      <AppHeader />
 
       <header className="mb-10">
         <p className="mb-2 font-mono text-[10px] tracking-widest text-primary/70 uppercase">

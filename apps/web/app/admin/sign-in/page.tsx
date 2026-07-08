@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState } from "react";
 import { requestAdminLink, type AdminAuthState } from "@/app/admin/actions";
+import { AppHeader } from "@/components/app-header";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -13,9 +13,7 @@ export default function AdminSignInPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col items-center justify-center px-6 text-center">
-      <span className="mb-10 font-serif text-lg italic">
-        <Link href="/" className="hover:text-primary">Trice</Link> / admin
-      </span>
+      <AppHeader breadcrumbs={[{ label: "admin" }]} />
 
       {state.ok ? (
         <p className="font-serif text-lg text-foreground">

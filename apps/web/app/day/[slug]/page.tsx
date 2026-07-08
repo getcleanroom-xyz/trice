@@ -1,11 +1,11 @@
 import { notFound, redirect } from "next/navigation";
-import Link from "next/link";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db/client";
 import { days, quizQuestions, quizTasks, quizAttempts, subscribers as subsTable } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { validateMagicLink } from "@/lib/auth/magic-link";
 import { verifyAdminSessionCookie, ADMIN_COOKIE_NAME } from "@/lib/admin/session";
+import { AppHeader } from "@/components/app-header";
 import { StampBadge } from "@/components/stamp-badge";
 import { DailyContent } from "@/components/daily-content";
 
@@ -98,10 +98,9 @@ export default async function DayPage({
 
   return (
     <main className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-4 sm:py-6 pb-16 sm:pb-24">
-      <header className="mb-4 flex items-center justify-between">
-        <Link href="/" className="font-serif text-lg italic text-foreground hover:text-primary transition-colors">Trice</Link>
+      <AppHeader>
         <StampBadge publishAt={day.publishAt} expiresAt={day.expiresAt} />
-      </header>
+      </AppHeader>
       <p className="mb-4 font-mono text-[11px] text-muted-foreground">
         day {day.dayNumber}
         {isAdmin && <span className="ml-2 text-primary font-medium">(admin preview)</span>}

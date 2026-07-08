@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { AppHeader } from "@/components/app-header";
 import { db } from "@/lib/db/client";
 import { subscribers, days, emailSends, quizAttempts } from "@/lib/db/schema";
 import { eq, sql, count, isNull } from "drizzle-orm";
@@ -61,13 +61,7 @@ export default async function AnalyticsPage() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 sm:px-6 py-8 sm:py-12">
-      <span className="mb-8 block font-serif text-lg italic">
-        <Link href="/" className="hover:text-primary">Trice</Link>
-        <span className="text-muted-foreground"> / </span>
-        <Link href="/admin" className="hover:text-primary">admin</Link>
-        <span className="text-muted-foreground"> / </span>
-        analytics
-      </span>
+      <AppHeader breadcrumbs={[{ href: "/admin", label: "admin" }, { label: "analytics" }]} />
       <h1 className="mb-2 font-serif text-2xl text-foreground">Analytics</h1>
       <p className="mb-8 text-sm text-muted-foreground">A pulse on the community</p>
 
