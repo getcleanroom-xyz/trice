@@ -90,7 +90,7 @@ export function DraggableDayList({
   days, total, page, totalPages, q, sort, topicId, onReorder,
 }: {
   days: Day[]; total: number; page: number; totalPages: number; q?: string; sort?: string; topicId?: string;
-  onReorder: (ids: string[]) => void;
+  onReorder: (ids: string[]) => Promise<void> | void;
 }) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const router = useRouter();
@@ -100,7 +100,7 @@ export function DraggableDayList({
 
   if (local !== days) setLocal(days);
 
-  function handleDragEnd(event: DragEndEvent) {
+  async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     const oldIdx = local.findIndex((d) => d.id === active.id);
@@ -108,7 +108,7 @@ export function DraggableDayList({
     const next = [...local];
     next.splice(newIdx, 0, next.splice(oldIdx, 1)[0]);
     setLocal(next);
-    onReorder(next.map((d) => d.id));
+    await onReorder(next.map((d) => d.id));
     router.refresh();
   }
 

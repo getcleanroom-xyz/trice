@@ -43,7 +43,7 @@ export function DraggableTopicList({
   topics, total, page, totalPages, q, onReorder,
 }: {
   topics: Topic[]; total: number; page: number; totalPages: number; q?: string;
-  onReorder: (ids: string[]) => void;
+  onReorder: (ids: string[]) => Promise<void> | void;
 }) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
   const router = useRouter();
@@ -52,7 +52,7 @@ export function DraggableTopicList({
 
   if (local !== topics) setLocal(topics);
 
-  function handleDragEnd(event: DragEndEvent) {
+  async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     const oldIdx = local.findIndex((t) => t.id === active.id);
@@ -60,7 +60,7 @@ export function DraggableTopicList({
     const next = [...local];
     next.splice(newIdx, 0, next.splice(oldIdx, 1)[0]);
     setLocal(next);
-    onReorder(next.map((t) => t.id));
+    await onReorder(next.map((t) => t.id));
     router.refresh();
   }
 
