@@ -30,7 +30,7 @@ try {
       if (error) throw new Error(error.message);
     } else if (job.data.kind === "daily_drop") {
       const day = (await db.select().from(days).where(eq(days.id, job.data.dayId!)))[0];
-      if (!day) return;
+      if (!day || day.expiresAt < new Date()) return;
 
       const token = randomBytes(32).toString("base64url");
       await db.insert(magicLinks).values({

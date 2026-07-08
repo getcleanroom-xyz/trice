@@ -191,12 +191,21 @@ export const dailyDropCron = new Elysia()
             .where(eq(emailSends.status, "queued"))
             .limit(500);
 
+          const now = new Date();
           for (const row of queued) {
             const base = {
               emailSendId: row.id,
               subscriberId: row.subscriberId,
               dayId: row.dayId ?? undefined,
             };
+
+            if (row.kind === "daily_drop" && row.dayId) {
+              const day = (await db.select().from(days).where(eq(days.id, row.dayId)))[0];
+              if (!day || day.expiresAt < now) {
+                await db.update(emailSends).set({ status: "failed" }).where(eq(emailSends.id, row.id));
+                continue;
+              }
+            }
 
             if (row.kind === "weekly_insights") {
               const tokens = await db
