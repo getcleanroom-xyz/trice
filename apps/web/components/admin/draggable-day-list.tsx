@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Trash2, ExternalLink, Pencil, GripVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
@@ -92,6 +93,7 @@ export function DraggableDayList({
   onReorder: (ids: string[]) => void;
 }) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const router = useRouter();
   const [local, setLocal] = useState(days);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   useAdminKeyboard();
@@ -107,6 +109,7 @@ export function DraggableDayList({
     next.splice(newIdx, 0, next.splice(oldIdx, 1)[0]);
     setLocal(next);
     onReorder(next.map((d) => d.id));
+    router.refresh();
   }
 
   const enableDnd = !!topicId;

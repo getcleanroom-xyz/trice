@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Trash2, Pencil, GripVertical } from "lucide-react";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
@@ -45,6 +46,7 @@ export function DraggableTopicList({
   onReorder: (ids: string[]) => void;
 }) {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const router = useRouter();
   const [local, setLocal] = useState(topics);
   const [confirmId, setConfirmId] = useState<string | null>(null);
 
@@ -59,6 +61,7 @@ export function DraggableTopicList({
     next.splice(newIdx, 0, next.splice(oldIdx, 1)[0]);
     setLocal(next);
     onReorder(next.map((t) => t.id));
+    router.refresh();
   }
 
   return (
