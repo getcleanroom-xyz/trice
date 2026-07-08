@@ -1,21 +1,28 @@
 "use client";
 
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+
 export function TopicFilter({ topic, allTopics }: { topic: string | undefined; allTopics: { id: string; title: string }[] }) {
+  function onChange(value: string) {
+    const p = new URLSearchParams(window.location.search);
+    p.set("tab", "days");
+    if (value) p.set("topic", value);
+    else p.delete("topic");
+    p.delete("page");
+    window.location.search = p.toString();
+  }
+
   return (
-    <form method="GET" className="flex items-center gap-2">
-      <input type="hidden" name="tab" value="days" />
-      <select
-        name="topic"
-        defaultValue={topic ?? ""}
-        onChange={(e) => { const p = new URLSearchParams(window.location.search); p.set("topic", e.target.value); p.delete("page"); window.location.search = p.toString(); }}
-        className="h-9 rounded-sm border border-input bg-transparent px-3 py-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-      >
-        <option value="">All topics</option>
+    <Select value={topic ?? ""} onValueChange={onChange}>
+      <SelectTrigger className="h-9 w-auto min-w-[160px] text-xs">
+        <SelectValue placeholder="All topics" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="">All topics</SelectItem>
         {allTopics.map((t) => (
-          <option key={t.id} value={t.id}>{t.title}</option>
+          <SelectItem key={t.id} value={t.id}>{t.title}</SelectItem>
         ))}
-      </select>
-      <noscript><button type="submit" className="h-9 rounded-sm border border-input px-3 text-xs text-muted-foreground">Go</button></noscript>
-    </form>
+      </SelectContent>
+    </Select>
   );
 }
