@@ -2,10 +2,12 @@ export function gradingNotificationEmail({
   dayTitle,
   dayNumber,
   grade,
+  unsubscribeUrl,
 }: {
   dayTitle: string;
   dayNumber: number;
   grade: string;
+  unsubscribeUrl: string;
 }) {
   return `
   <div style="background:#16130E;color:#E8DFC8;font-family:'Work Sans',sans-serif;padding:36px 34px;">
@@ -20,7 +22,7 @@ export function gradingNotificationEmail({
       Keep going — the next card is on its way.
     </p>
     <div style="border-top:1px solid rgba(236,227,208,0.1);padding-top:18px;font-family:monospace;font-size:10px;color:#6E6552;">
-      day ${dayNumber} &middot; <a href="{{unsubscribeUrl}}" style="color:#B98A46;">unsubscribe</a>
+      day ${dayNumber} &middot; <a href="${unsubscribeUrl}" style="color:#B98A46;">unsubscribe</a>
     </div>
   </div>`;
 }

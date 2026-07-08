@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db/client";
-import { days, quizQuestions, quizTasks, quizAttempts } from "@/lib/db/schema";
+import { days, quizQuestions, quizTasks, quizAttempts, subscribers as subsTable } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { validateMagicLink } from "@/lib/auth/magic-link";
 import { verifyAdminSessionCookie, ADMIN_COOKIE_NAME } from "@/lib/admin/session";
@@ -35,6 +35,28 @@ export default async function DayPage({
     const session = await validateMagicLink(token);
     if (!session || session.dayId !== day.id) redirect("/sign-in");
     subscriberId = session.subscriber.id;
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const sub = session.subscriber;
+    const lastVisit = sub.lastVisitAt
+      ? new Date(sub.lastVisitAt.getFullYear(), sub.lastVisitAt.getMonth(), sub.lastVisitAt.getDate())
+      : null;
+
+    let cur = sub.currentStreak;
+    if (!lastVisit) {
+      cur = 1;
+    } else {
+      const diff = Math.round((today.getTime() - lastVisit.getTime()) / 86400000);
+      if (diff === 1) cur += 1;
+      else if (diff > 1) cur = 1;
+    }
+
+    await db.update(subsTable).set({
+      currentStreak: cur,
+      longestStreak: Math.max(cur, sub.longestStreak),
+      lastVisitAt: now,
+    }).where(eq(subsTable.id, sub.id));
   }
 
   const questions = await db.query.quizQuestions.findMany({

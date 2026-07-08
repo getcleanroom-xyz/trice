@@ -18,6 +18,7 @@ export const subscribers = pgTable("subscribers", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   currentStreak: integer("current_streak").default(0).notNull(),
   longestStreak: integer("longest_streak").default(0).notNull(),
+  lastVisitAt: timestamp("last_visit_at", { withTimezone: true }),
   // A random, unguessable token stored in an HttpOnly cookie on first visit.
   // Lets the draggable-layout preferences (and streak display) persist on
   // the same device across browsers, without ever being a login mechanism.

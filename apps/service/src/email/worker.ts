@@ -1,6 +1,6 @@
 import { Worker } from "bullmq";
 import { eq, and, gte, lte } from "drizzle-orm";
-import { randomBytes } from "node:crypto";
+import { randomBytes, createHash } from "node:crypto";
 import { Resend } from "resend";
 import { connection, type EmailJob } from "./queue";
 import { db, subscribers, days, emailSends, magicLinks, insightTokens, quizAttempts } from "@/db";
@@ -11,6 +11,11 @@ import { gradingNotificationEmail } from "@/email/templates/grading-notification
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+function unsubscribeUrl(subscriberId: string): string {
+  const sig = createHash("sha256").update(`${subscriberId}:${process.env.ADMIN_SESSION_SECRET ?? ""}`).digest("hex");
+  return `${process.env.WEB_URL}/api/unsubscribe/${subscriberId}?sig=${sig}`;
+}
+
 console.log("[worker] starting, connecting to redis...");
 
 const worker = new Worker<EmailJob>("email", async (job) => {
@@ -19,12 +24,14 @@ const worker = new Worker<EmailJob>("email", async (job) => {
   )[0];
   if (!subscriber || subscriber.unsubscribedAt) return;
 
+  const uUrl = unsubscribeUrl(subscriber.id);
+
   if (job.data.kind === "confirmation") {
     const { error } = await resend.emails.send({
       from: "Trice <hello@emails.getcleanroom.xyz>",
       to: subscriber.email,
       subject: "You're on the roll",
-      html: confirmationEmail(),
+      html: confirmationEmail({ unsubscribeUrl: uUrl }),
     });
     if (error) throw new Error(error.message);
   } else if (job.data.kind === "daily_drop") {
@@ -47,6 +54,7 @@ const worker = new Worker<EmailJob>("email", async (job) => {
         title: day.title,
         slug: day.slug,
         url: `${process.env.WEB_URL}/day/${day.slug}?token=${token}`,
+        unsubscribeUrl: uUrl,
       }),
     });
     if (error) throw new Error(error.message);
@@ -73,6 +81,7 @@ const worker = new Worker<EmailJob>("email", async (job) => {
         dayTitle: day.title,
         dayNumber: day.dayNumber,
         grade: attempt.taskGrade,
+        unsubscribeUrl: uUrl,
       }),
     });
     if (error) throw new Error(error.message);
@@ -129,6 +138,7 @@ const worker = new Worker<EmailJob>("email", async (job) => {
         totalCorrect,
         totalQuestions,
         url: `${process.env.WEB_URL}/insights/${weekStart.toISOString().split("T")[0]}?token=${insightToken.token}`,
+        unsubscribeUrl: uUrl,
       }),
     });
     if (error) throw new Error(error.message);

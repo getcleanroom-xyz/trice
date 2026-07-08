@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { createHash } from "node:crypto";
 
 let _resend: Resend | null = null;
 export function getResend() {
@@ -6,7 +7,17 @@ export function getResend() {
   return _resend;
 }
 
-export function dailyDropHtml({ title, url }: { title: string; url: string }) {
+function unsubscribeUrl(subscriberId: string): string {
+  const secret = process.env.ADMIN_SESSION_SECRET ?? "";
+  const sig = createHash("sha256").update(`${subscriberId}:${secret}`).digest("hex");
+  return `${process.env.WEB_URL}/api/unsubscribe/${subscriberId}?sig=${sig}`;
+}
+
+function footer(unsubscribeUrl: string) {
+  return `<div style="border-top:1px solid rgba(236,227,208,0.1);margin-top:32px;padding-top:18px;font-family:monospace;font-size:10px;color:#6E6552;"><a href="${unsubscribeUrl}" style="color:#B98A46;">unsubscribe</a></div>`;
+}
+
+export function dailyDropHtml({ title, url, subscriberId }: { title: string; url: string; subscriberId: string }) {
   return `<div style="background:#16130E;color:#E8DFC8;font-family:'Work Sans',sans-serif;padding:36px 34px;">
     <div style="font-family:Georgia,serif;font-style:italic;font-size:18px;color:#ECE0C8;margin-bottom:32px;">Trice</div>
     <p style="font-family:monospace;font-size:10px;letter-spacing:0.05em;color:#B98A46;margin:0 0 8px;">today's card</p>
@@ -18,10 +29,11 @@ export function dailyDropHtml({ title, url }: { title: string; url: string }) {
     <a href="${url}" style="display:inline-block;border:1px solid #B98A46;color:#ECE0C8;font-family:monospace;font-size:12px;padding:11px 22px;border-radius:2px;text-decoration:none;">
       Open today's card &rarr;
     </a>
+    ${footer(unsubscribeUrl(subscriberId))}
   </div>`;
 }
 
-export function confirmationHtml() {
+export function confirmationHtml({ subscriberId }: { subscriberId: string }) {
   return `<div style="background:#16130E;color:#E8DFC8;font-family:'Work Sans',sans-serif;padding:36px 34px;">
     <div style="font-family:Georgia,serif;font-style:italic;font-size:18px;color:#ECE0C8;margin-bottom:32px;">Trice</div>
     <p style="font-family:Georgia,serif;font-size:21px;line-height:1.4;color:#F1E9D6;margin:0 0 18px;">You're on the roll.</p>
@@ -38,6 +50,7 @@ export function confirmationHtml() {
       Miss a day and that day's card is filed away for good &mdash; but the next
       one still comes right on schedule. No catching up, no guilt, just tomorrow.
     </p>
+    ${footer(unsubscribeUrl(subscriberId))}
   </div>`;
 }
 
@@ -45,10 +58,12 @@ export function gradingNotificationHtml({
   dayNumber,
   dayTitle,
   grade,
+  subscriberId,
 }: {
   dayNumber: number;
   dayTitle: string;
   grade: string;
+  subscriberId: string;
 }) {
   return `<div style="background:#16130E;color:#E8DFC8;font-family:'Work Sans',sans-serif;padding:36px 34px;">
     <div style="font-family:Georgia,serif;font-style:italic;font-size:18px;color:#ECE0C8;margin-bottom:32px;">Trice</div>
@@ -58,5 +73,6 @@ export function gradingNotificationHtml({
       <div style="font-family:monospace;font-size:10px;letter-spacing:0.05em;color:#B98A46;margin-bottom:6px;">feedback</div>
       <div style="font-family:Georgia,serif;font-size:16px;line-height:1.5;color:#F1E9D6;">${grade}</div>
     </div>
+    ${footer(unsubscribeUrl(subscriberId))}
   </div>`;
 }

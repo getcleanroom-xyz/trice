@@ -101,13 +101,17 @@ function Pagination({ page, totalPages, param }: { page: number; totalPages: num
   );
 }
 
-function AdminTabs({ activeTab }: { activeTab: "topics" | "days" | "grading" }) {
+function AdminTabs({ activeTab }: { activeTab: "topics" | "days" | "grading" | "analytics" }) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   function switchTab(tab: string) {
     if (tab === "grading") {
       router.push("/admin/grading");
+      return;
+    }
+    if (tab === "analytics") {
+      router.push("/admin/analytics");
       return;
     }
     const params = new URLSearchParams(searchParams);
@@ -136,6 +140,12 @@ function AdminTabs({ activeTab }: { activeTab: "topics" | "days" | "grading" }) 
         className={`px-4 py-2 text-xs font-mono border-b-2 transition-colors ${activeTab === "grading" ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}
       >
         Grading
+      </button>
+      <button
+        onClick={() => switchTab("analytics")}
+        className={`px-4 py-2 text-xs font-mono border-b-2 transition-colors ${activeTab === "analytics" ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}
+      >
+        Analytics
       </button>
     </div>
   );

@@ -5,6 +5,7 @@ export function weeklyInsightsEmail({
   totalCorrect,
   totalQuestions,
   url,
+  unsubscribeUrl,
 }: {
   weekLabel: string;
   daysAvailable: number;
@@ -12,6 +13,7 @@ export function weeklyInsightsEmail({
   totalCorrect: number;
   totalQuestions: number;
   url: string;
+  unsubscribeUrl: string;
 }) {
   const scoreLine =
     totalQuestions > 0
@@ -44,7 +46,7 @@ export function weeklyInsightsEmail({
       See the full review &rarr;
     </a>
     <div style="border-top:1px solid rgba(236,227,208,0.1);margin-top:32px;padding-top:18px;font-family:monospace;font-size:10px;color:#6E6552;">
-      sent every sunday &middot; <a href="{{unsubscribeUrl}}" style="color:#B98A46;">unsubscribe</a>
+      sent every sunday &middot; <a href="${unsubscribeUrl}" style="color:#B98A46;">unsubscribe</a>
     </div>
   </div>`;
 }

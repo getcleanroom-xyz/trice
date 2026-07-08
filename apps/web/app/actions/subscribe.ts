@@ -32,7 +32,7 @@ export async function subscribe(
     from: "Trice <hello@emails.getcleanroom.xyz>",
     to: subscriber.email,
     subject: "You're on the roll",
-    html: confirmationHtml(),
+    html: confirmationHtml({ subscriberId: subscriber.id }),
   });
 
   await db.insert(emailSends).values({

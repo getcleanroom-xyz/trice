@@ -46,7 +46,7 @@ export async function requestLink(
     from: "Trice <hello@emails.getcleanroom.xyz>",
     to: subscriber.email,
     subject: `Day ${today.title}`,
-    html: dailyDropHtml({ title: today.title, url }),
+    html: dailyDropHtml({ title: today.title, url, subscriberId: subscriber.id }),
   });
 
   await db.insert(emailSends).values({

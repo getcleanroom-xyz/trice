@@ -4,7 +4,10 @@ import { useState, useEffect, useTransition, useRef, useCallback } from "react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { X, Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, Plus, GripVertical, ChevronLeft, ChevronRight } from "lucide-react";
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { createDay, updateDay } from "@/app/admin/content-actions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -74,7 +77,7 @@ function toLocalString(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-export function DayForm({ topics, dayData, dayId }: { topics: { id: string; title: string }[]; dayData?: Partial<FormValues>; dayId?: string }) {
+export function DayForm({ topics, dayData, dayId, dayNumberSuggestions }: { topics: { id: string; title: string }[]; dayData?: Partial<FormValues>; dayId?: string; dayNumberSuggestions?: Record<string, number> }) {
   const [serverError, setServerError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [step, setStep] = useState(0);
@@ -89,9 +92,11 @@ export function DayForm({ topics, dayData, dayId }: { topics: { id: string; titl
 
   function getInitialValues(): FormValues {
     const source = dayData;
+    const firstTopic = topics[0]?.id ?? "";
+    const suggested = !dayData ? (dayNumberSuggestions?.[firstTopic] ?? 1) : 1;
     return {
-      topicId: source?.topicId ?? topics[0]?.id ?? "",
-      dayNumber: source?.dayNumber ?? 1,
+      topicId: source?.topicId ?? firstTopic,
+      dayNumber: source?.dayNumber ?? suggested,
       slug: source?.slug ?? "",
       title: source?.title ?? "",
       videoUrls: source?.videoUrls ?? [],
@@ -165,6 +170,13 @@ export function DayForm({ topics, dayData, dayId }: { topics: { id: string; titl
       }
     }
   }, [allValues.slug]);
+
+  const watchedTopicId = watch("topicId");
+  useEffect(() => {
+    if (dayData) return;
+    const suggested = dayNumberSuggestions?.[watchedTopicId];
+    if (suggested) setValue("dayNumber", suggested, { shouldValidate: false });
+  }, [watchedTopicId, dayData, dayNumberSuggestions, setValue]);
 
   const objectivesArray = useFieldArray<FormValues, "objectives">({ control, name: "objectives" });
   const questionsArray = useFieldArray<FormValues, "questions">({ control, name: "questions" });
@@ -402,45 +414,7 @@ export function DayForm({ topics, dayData, dayId }: { topics: { id: string; titl
           <div className="grid grid-cols-1 lg:grid-cols-[1fr,320px] gap-6">
             <div className="flex flex-col gap-5">
               <div className="flex flex-col gap-3 rounded-sm border border-border p-4">
-                {questionsArray.fields.map((field, qi) => (
-                  <div key={field.id} className="rounded-sm border border-border p-3">
-                    <div className="mb-2 flex items-center justify-between">
-                      <span className="font-mono text-[10px] text-muted-foreground">question {qi + 1}</span>
-                      <button type="button" onClick={() => questionsArray.remove(qi)} className="text-muted-foreground" aria-label="Remove question">
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                    <Input className="mb-2" {...register(`questions.${qi}.prompt`)} placeholder="Prompt" />
-                    {errors.questions?.[qi]?.prompt && (
-                      <p className={cn(fieldErrorClass, "mb-1")}>{errors.questions[qi].prompt.message}</p>
-                    )}
-                    <div className="mb-1.5 flex items-center gap-2">
-                      <span className="font-mono text-[10px] text-muted-foreground whitespace-nowrap">correct</span>
-                      <Controller control={control} name={`questions.${qi}.correctIndex`} render={({ field: rf }) => (
-                        <Select value={String(rf.value ?? 0)} onValueChange={(v) => rf.onChange(Number(v))}>
-                          <SelectTrigger className="h-8 w-16 text-xs"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            {field.choices.map((_, ci) => (
-                              <SelectItem key={ci} value={String(ci)}>{ci + 1}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )} />
-                    </div>
-                    {field.choices.map((_, ci) => (
-                      <div key={ci} className="mb-1.5">
-                        <Input {...register(`questions.${qi}.choices.${ci}`)} placeholder={`Choice ${ci + 1}`} />
-                      </div>
-                    ))}
-                    {errors.questions?.[qi]?.choices && (
-                      <p className={fieldErrorClass}>{errors.questions[qi].choices.message}</p>
-                    )}
-                    <button type="button" onClick={() => { const q = getValues(`questions.${qi}`); questionsArray.update(qi, { ...q, choices: [...q.choices, ""] }); }}
-                      className="flex items-center gap-1 font-mono text-[11px] text-primary">
-                      <Plus className="h-3 w-3" /> add choice
-                    </button>
-                  </div>
-                ))}
+                <QuestionsDnd questionsArray={questionsArray} control={control} register={register} errors={errors} getValues={getValues} setValue={setValue} fieldErrorClass={fieldErrorClass} />
                 {errors.questions && !Array.isArray(errors.questions) && (
                   <p className={fieldErrorClass}>{errors.questions.message}</p>
                 )}
@@ -532,5 +506,100 @@ export function DayForm({ topics, dayData, dayId }: { topics: { id: string; titl
         )}
       </div>
     </form>
+  );
+}
+
+function QuestionsDnd({
+  questionsArray, control, register, errors, getValues, fieldErrorClass,
+}: {
+  questionsArray: ReturnType<typeof useFieldArray<FormValues, "questions", "id">>;
+  control: ReturnType<typeof useForm<FormValues>>["control"];
+  register: ReturnType<typeof useForm<FormValues>>["register"];
+  errors: ReturnType<typeof useForm<FormValues>>["formState"]["errors"];
+  getValues: ReturnType<typeof useForm<FormValues>>["getValues"];
+  fieldErrorClass: string;
+}) {
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const fields = questionsArray.fields;
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIdx = fields.findIndex((f) => f.id === active.id);
+    const newIdx = fields.findIndex((f) => f.id === over.id);
+    questionsArray.move(oldIdx, newIdx);
+  }
+
+  return (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={fields.map((f) => f.id)} strategy={verticalListSortingStrategy}>
+        <div className="flex flex-col gap-3">
+          {fields.map((field, qi) => (
+            <SortableQuestion key={field.id} id={field.id} qi={qi} control={control} register={register} errors={errors} getValues={getValues} questionsArray={questionsArray} fieldErrorClass={fieldErrorClass} />
+          ))}
+        </div>
+      </SortableContext>
+    </DndContext>
+  );
+}
+
+function SortableQuestion({
+  id, qi, control, register, errors, getValues, questionsArray, fieldErrorClass,
+}: {
+  id: string; qi: number;
+  control: ReturnType<typeof useForm<FormValues>>["control"];
+  register: ReturnType<typeof useForm<FormValues>>["register"];
+  errors: ReturnType<typeof useForm<FormValues>>["formState"]["errors"];
+  getValues: ReturnType<typeof useForm<FormValues>>["getValues"];
+  questionsArray: ReturnType<typeof useFieldArray<FormValues, "questions", "id">>;
+  fieldErrorClass: string;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+  const field = questionsArray.fields[qi];
+
+  return (
+    <div ref={setNodeRef} style={style} className="rounded-sm border border-border p-3">
+      <div className="mb-2 flex items-center justify-between">
+        <div className="flex items-center gap-1">
+          <button {...attributes} {...listeners} className="text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing touch-none">
+            <GripVertical className="h-3.5 w-3.5" />
+          </button>
+          <span className="font-mono text-[10px] text-muted-foreground">question {qi + 1}</span>
+        </div>
+        <button type="button" onClick={() => questionsArray.remove(qi)} className="text-muted-foreground" aria-label="Remove question">
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+      <Input className="mb-2" {...register(`questions.${qi}.prompt`)} placeholder="Prompt" />
+      {errors.questions?.[qi]?.prompt && (
+        <p className={cn(fieldErrorClass, "mb-1")}>{errors.questions[qi].prompt.message}</p>
+      )}
+      <div className="mb-1.5 flex items-center gap-2">
+        <span className="font-mono text-[10px] text-muted-foreground whitespace-nowrap">correct</span>
+        <Controller control={control} name={`questions.${qi}.correctIndex`} render={({ field: rf }) => (
+          <Select value={String(rf.value ?? 0)} onValueChange={(v) => rf.onChange(Number(v))}>
+            <SelectTrigger className="h-8 w-16 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {field.choices.map((_, ci) => (
+                <SelectItem key={ci} value={String(ci)}>{ci + 1}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )} />
+      </div>
+      {field.choices.map((_, ci) => (
+        <div key={ci} className="mb-1.5">
+          <Input {...register(`questions.${qi}.choices.${ci}`)} placeholder={`Choice ${ci + 1}`} />
+        </div>
+      ))}
+      {errors.questions?.[qi]?.choices && (
+        <p className={fieldErrorClass}>{errors.questions[qi].choices.message}</p>
+      )}
+      <button type="button" onClick={() => { const q = getValues(`questions.${qi}`); questionsArray.update(qi, { ...q, choices: [...q.choices, ""] }); }}
+        className="flex items-center gap-1 font-mono text-[11px] text-primary">
+        <Plus className="h-3 w-3" /> add choice
+      </button>
+    </div>
   );
 }

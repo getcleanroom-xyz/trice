@@ -1,4 +1,4 @@
-export function confirmationEmail() {
+export function confirmationEmail({ unsubscribeUrl }: { unsubscribeUrl: string }) {
   return `
   <div style="background:#16130E;color:#E8DFC8;font-family:'Work Sans',sans-serif;padding:36px 34px;">
     <div style="font-family:Georgia,serif;font-style:italic;font-size:18px;color:#ECE0C8;margin-bottom:32px;">Trice</div>
@@ -17,7 +17,7 @@ export function confirmationEmail() {
       one still comes right on schedule. No catching up, no guilt, just tomorrow.
     </p>
     <div style="border-top:1px solid rgba(236,227,208,0.1);padding-top:18px;font-family:monospace;font-size:10px;color:#6E6552;">
-      sent because you signed up at trice.getcleanroom.xyz &middot; <a href="{{unsubscribeUrl}}" style="color:#B98A46;">unsubscribe</a>
+      <a href="${unsubscribeUrl}" style="color:#B98A46;">unsubscribe</a>
     </div>
   </div>`;
 }

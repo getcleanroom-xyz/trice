@@ -208,6 +208,35 @@ export async function deleteTopic(formData: FormData) {
   redirect("/admin");
 }
 
+export async function reorderTopics(orderedIds: string[]) {
+  await db.transaction(async (tx) => {
+    for (let i = 0; i < orderedIds.length; i++) {
+      await tx.update(topics).set({ sortOrder: i }).where(eq(topics.id, orderedIds[i]));
+    }
+  });
+}
+
+export async function reorderDays(topicId: string, orderedIds: string[]) {
+  await db.transaction(async (tx) => {
+    for (let i = 0; i < orderedIds.length; i++) {
+      const day = await tx.query.days.findFirst({ where: eq(days.id, orderedIds[i]) });
+      if (day) {
+        await tx.update(days).set({ dayNumber: i + 1 }).where(eq(days.id, orderedIds[i]));
+      }
+    }
+  });
+}
+
+export async function nextTopicSortOrder(): Promise<number> {
+  const result = await db.select({ v: sql<number>`COALESCE(MAX(${topics.sortOrder}), -1) + 1` }).from(topics);
+  return result[0].v;
+}
+
+export async function nextDayNumber(topicId: string): Promise<number> {
+  const result = await db.select({ v: sql<number>`COALESCE(MAX(${days.dayNumber}), 0) + 1` }).from(days).where(eq(days.topicId, topicId));
+  return result[0].v;
+}
+
 export async function deleteDay(formData: FormData) {
   const id = formData.get("id") as string;
   if (!id) return;
@@ -296,7 +325,7 @@ export async function gradeTask(attemptId: string, grade: string) {
     from: "Trice <hello@emails.getcleanroom.xyz>",
     to: subscriber.email,
     subject: `Your task for day ${day.dayNumber} has been graded`,
-    html: gradingNotificationHtml({ dayNumber: day.dayNumber, dayTitle: day.title, grade }),
+    html: gradingNotificationHtml({ dayNumber: day.dayNumber, dayTitle: day.title, grade, subscriberId: attempt.subscriberId }),
   });
 
   await db.insert(emailSends).values({
