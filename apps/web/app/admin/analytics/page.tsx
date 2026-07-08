@@ -22,56 +22,117 @@ async function getStats() {
   const quizTotal = await db.select({ v: count() }).from(quizAttempts).then(r => r[0].v);
   const gradedTasks = await db.select({ v: count() }).from(quizAttempts).where(sql`${quizAttempts.taskGrade} IS NOT NULL`).then(r => r[0].v);
 
-  const streaks: { range: string; subquery: Promise<{ v: number }[]> }[] = [
-    { range: "≥ 1 day", subquery: db.select({ v: count() }).from(subscribers).where(sql`${subscribers.currentStreak} >= 1`) },
-    { range: "≥ 7 days", subquery: db.select({ v: count() }).from(subscribers).where(sql`${subscribers.currentStreak} >= 7`) },
-    { range: "≥ 30 days", subquery: db.select({ v: count() }).from(subscribers).where(sql`${subscribers.currentStreak} >= 30`) },
-  ];
-  const streakData = await Promise.all(streaks.map(async (s) => ({ range: s.range, count: (await s.subquery)[0].v })));
+  const streak1 = db.select({ v: count() }).from(subscribers).where(sql`${subscribers.currentStreak} >= 1`);
+  const streak7 = db.select({ v: count() }).from(subscribers).where(sql`${subscribers.currentStreak} >= 7`);
+  const streak30 = db.select({ v: count() }).from(subscribers).where(sql`${subscribers.currentStreak} >= 30`);
+  const [[s1], [s7], [s30]] = await Promise.all([streak1, streak7, streak30]);
 
   return {
     totalSubs, activeSubs, subsThisWeek, subsThisMonth,
-    totalDays, liveDays, emailsSent, quizTotal, gradedTasks, streakData,
+    totalDays, liveDays, emailsSent, quizTotal, gradedTasks,
+    streak1: s1.v, streak7: s7.v, streak30: s30.v,
   };
 }
 
+function Bar({ value, max, className }: { value: number; max: number; className?: string }) {
+  const pct = max > 0 ? Math.round((value / max) * 100) : 0;
+  return (
+    <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+      <div className={`h-full rounded-full transition-all ${className ?? "bg-primary/60"}`} style={{ width: `${pct}%` }} />
+    </div>
+  );
+}
+
+function SectionDivider() {
+  return <div className="mb-6 mt-8 h-px w-full bg-gradient-to-r from-primary/40 via-border to-transparent" />;
+}
+
+function SectionHeading({ label }: { label: string }) {
+  return (
+    <div className="mb-4 flex items-center gap-3">
+      <span className="font-serif text-lg text-foreground">{label}</span>
+      <span className="h-px flex-1 bg-border" />
+    </div>
+  );
+}
+
 export default async function AnalyticsPage() {
-  const stats = await getStats();
+  const s = await getStats();
 
   return (
     <main className="mx-auto max-w-3xl px-4 sm:px-6 py-8 sm:py-12">
       <span className="mb-8 block font-serif text-lg italic">
-        <Link href="/" className="hover:text-primary">Trice</Link>{" "}
-        / <Link href="/admin" className="hover:text-primary">admin</Link>{" "}
-        / analytics
+        <Link href="/" className="hover:text-primary">Trice</Link>
+        <span className="text-muted-foreground"> / </span>
+        <Link href="/admin" className="hover:text-primary">admin</Link>
+        <span className="text-muted-foreground"> / </span>
+        analytics
       </span>
-      <h1 className="mb-6 font-serif text-2xl text-foreground">Analytics</h1>
+      <h1 className="mb-2 font-serif text-2xl text-foreground">Analytics</h1>
+      <p className="mb-8 text-sm text-muted-foreground">A pulse on the community</p>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-        <StatBox label="Subscribers" value={stats.totalSubs} />
-        <StatBox label="Active" value={stats.activeSubs} />
-        <StatBox label="This week" value={stats.subsThisWeek} />
-        <StatBox label="This month" value={stats.subsThisMonth} />
+      <SectionHeading label="Subscribers" />
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+        <StatBox label="Total" value={s.totalSubs} />
+        <StatBox label="Active" value={s.activeSubs} />
+        <StatBox label="This week" value={s.subsThisWeek} />
+        <StatBox label="This month" value={s.subsThisMonth} />
+      </div>
+      <div className="mb-6 rounded-sm border border-border bg-card p-3">
+        <div className="mb-1 flex items-center justify-between font-mono text-[10px] text-muted-foreground">
+          <span>Active rate</span>
+          <span>{s.totalSubs > 0 ? Math.round((s.activeSubs / s.totalSubs) * 100) : 0}%</span>
+        </div>
+        <Bar value={s.activeSubs} max={s.totalSubs} />
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-        <StatBox label="Days published" value={stats.totalDays} />
-        <StatBox label="Currently live" value={stats.liveDays} />
-        <StatBox label="Emails sent" value={stats.emailsSent} />
-        <StatBox label="Quiz attempts" value={stats.quizTotal} />
+      <SectionDivider />
+
+      <SectionHeading label="Content" />
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <StatBox label="Days published" value={s.totalDays} />
+        <StatBox label="Currently live" value={s.liveDays} />
+        <StatBox label="Emails sent" value={s.emailsSent} />
+        <StatBox label="Quiz attempts" value={s.quizTotal} />
       </div>
 
-      <h2 className="mb-3 font-serif text-lg text-foreground">Streaks</h2>
-      <div className="grid grid-cols-3 gap-3 mb-8">
-        {stats.streakData.map((s) => (
-          <StatBox key={s.range} label={s.range} value={s.count} />
-        ))}
+      <SectionDivider />
+
+      <SectionHeading label="Streaks" />
+
+      <div className="grid grid-cols-3 gap-3 mb-6">
+        <StatBox label="≥ 1 day" value={s.streak1} />
+        <StatBox label="≥ 7 days" value={s.streak7} />
+        <StatBox label="≥ 30 days" value={s.streak30} />
       </div>
 
-      <h2 className="mb-3 font-serif text-lg text-foreground">Grading</h2>
-      <div className="grid grid-cols-2 gap-3">
-        <StatBox label="Submissions" value={stats.quizTotal} />
-        <StatBox label="Graded" value={stats.gradedTasks} />
+      <div className="rounded-sm border border-border bg-card p-3">
+        <div className="mb-2 flex items-center justify-between font-mono text-[10px] text-muted-foreground">
+          <span>Retention funnel</span>
+        </div>
+        <div className="flex flex-col gap-2">
+          <FunnelRow label="Viewed ≥ 1 day" value={s.streak1} max={s.activeSubs} />
+          <FunnelRow label="Viewed ≥ 7 days" value={s.streak7} max={s.streak1} />
+          <FunnelRow label="Viewed ≥ 30 days" value={s.streak30} max={s.streak7} />
+        </div>
+      </div>
+
+      <SectionDivider />
+
+      <SectionHeading label="Grading" />
+
+      <div className="grid grid-cols-2 gap-3 mb-3">
+        <StatBox label="Submissions" value={s.quizTotal} />
+        <StatBox label="Graded" value={s.gradedTasks} />
+      </div>
+      <div className="rounded-sm border border-border bg-card p-3">
+        <div className="mb-1 flex items-center justify-between font-mono text-[10px] text-muted-foreground">
+          <span>Graded rate</span>
+          <span>{s.quizTotal > 0 ? Math.round((s.gradedTasks / s.quizTotal) * 100) : 0}%</span>
+        </div>
+        <Bar value={s.gradedTasks} max={s.quizTotal} className="bg-primary/60" />
       </div>
     </main>
   );
@@ -79,9 +140,22 @@ export default async function AnalyticsPage() {
 
 function StatBox({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-sm border border-border p-4">
-      <div className="font-mono text-[10px] text-muted-foreground mb-1">{label}</div>
+    <div className="rounded-sm border border-border bg-card p-4">
+      <div className="font-mono text-[10px] text-muted-foreground tracking-wider mb-1">{label}</div>
       <div className="font-serif text-2xl text-foreground">{value}</div>
+    </div>
+  );
+}
+
+function FunnelRow({ label, value, max }: { label: string; value: number; max: number }) {
+  const pct = max > 0 ? Math.round((value / max) * 100) : 0;
+  return (
+    <div className="flex items-center gap-3">
+      <span className="w-32 shrink-0 font-mono text-[10px] text-muted-foreground">{label}</span>
+      <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
+        <div className="h-full rounded-full bg-primary/60 transition-all" style={{ width: `${pct}%` }} />
+      </div>
+      <span className="w-16 shrink-0 text-right font-mono text-[11px] text-foreground">{value}</span>
     </div>
   );
 }
