@@ -7,7 +7,8 @@ import { DayForm } from "@/components/admin/day-form";
 
 function pad(n: number) { return String(n).padStart(2, "0"); }
 function toLocalISO(d: Date): string {
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  const wat = new Date(d.getTime() + 60 * 60 * 1000);
+  return `${wat.getFullYear()}-${pad(wat.getMonth() + 1)}-${pad(wat.getDate())}T${pad(wat.getHours())}:${pad(wat.getMinutes())}`;
 }
 
 export const dynamic = "force-dynamic";

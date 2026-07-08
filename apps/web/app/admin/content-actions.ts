@@ -41,7 +41,7 @@ export async function createDay(input: CreateDayInput) {
   const [pDatePart, pTimePart] = parsed.data.publishAt.split("T");
   const [pYear, pMonth, pDay] = pDatePart.split("-").map(Number);
   const [pHour, pMinute] = pTimePart.split(":").map(Number);
-  const publishAt = new Date(pYear, pMonth - 1, pDay, pHour, pMinute);
+  const publishAt = new Date(Date.UTC(pYear, pMonth - 1, pDay, pHour - 1, pMinute));
   const expiresAt = new Date(publishAt.getTime() + parsed.data.graceHours * 60 * 60 * 1000);
 
   // A day and its quiz are one unit of publishing — if the quiz insert
@@ -95,7 +95,7 @@ export async function updateDay(id: string, input: CreateDayInput) {
   const [pDatePart, pTimePart] = parsed.data.publishAt.split("T");
   const [pYear, pMonth, pDay] = pDatePart.split("-").map(Number);
   const [pHour, pMinute] = pTimePart.split(":").map(Number);
-  const publishAt = new Date(pYear, pMonth - 1, pDay, pHour, pMinute);
+  const publishAt = new Date(Date.UTC(pYear, pMonth - 1, pDay, pHour - 1, pMinute));
   const expiresAt = new Date(publishAt.getTime() + parsed.data.graceHours * 60 * 60 * 1000);
 
   await db.transaction(async (tx) => {
