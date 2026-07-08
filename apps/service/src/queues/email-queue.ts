@@ -10,6 +10,7 @@ export const connection: ConnectionOptions = {
   port: Number(redisUrl.port || (useTls ? 6380 : 6379)),
   password: redisUrl.password || undefined,
   maxRetriesPerRequest: null,
+  family: 0,
   ...(useTls ? { tls: {} } : {}),
 };
 

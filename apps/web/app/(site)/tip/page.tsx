@@ -20,13 +20,10 @@ export default function TipPage() {
     setPending(method);
     setError(null);
     try {
-      const base = process.env.NEXT_PUBLIC_SERVICE_URL;
-      const endpoint =
-        method === "fiat" ? `${base}/payments/flutterwave/link` : `${base}/payments/nowpayments/link`;
-      const res = await fetch(endpoint, {
+      const res = await fetch("/api/payments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amountNgnKobo: amount * 100 }),
+        body: JSON.stringify({ method, amountNgnKobo: amount * 100 }),
       });
       if (!res.ok) throw new Error("Payment service unavailable");
       const { url } = await res.json();
