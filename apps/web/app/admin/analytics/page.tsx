@@ -9,8 +9,8 @@ async function getStats() {
   const totalSubs = await db.select({ v: count() }).from(subscribers).then(r => r[0].v);
   const activeSubs = await db.select({ v: count() }).from(subscribers).where(isNull(subscribers.unsubscribedAt)).then(r => r[0].v);
 
-  const weekAgo = new Date(Date.now() - 7 * 86400000);
-  const monthAgo = new Date(Date.now() - 30 * 86400000);
+  const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+  const monthAgo = new Date(Date.now() - 30 * 86400000).toISOString();
   const subsThisWeek = await db.select({ v: count() }).from(subscribers).where(sql`${subscribers.createdAt} >= ${weekAgo}`).then(r => r[0].v);
   const subsThisMonth = await db.select({ v: count() }).from(subscribers).where(sql`${subscribers.createdAt} >= ${monthAgo}`).then(r => r[0].v);
 
