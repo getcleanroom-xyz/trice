@@ -126,18 +126,16 @@ export function DayForm({ topics, dayData, dayId }: { topics: { id: string; titl
   const { register, control, handleSubmit, watch, setValue, getValues, formState: { errors } } = form;
 
   const watchedTitle = watch("title");
-  const watchedSlug = watch("slug");
   const allValues = watch();
   const slugTouchedRef = useRef(false);
 
   useEffect(() => {
     if (slugTouchedRef.current) return;
+    if (dayData) return;
     if (!watchedTitle) return;
     const generated = watchedTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-    if (!watchedSlug || watchedSlug === generated) {
-      setValue("slug", generated, { shouldValidate: false });
-    }
-  }, [watchedTitle, watchedSlug, setValue]);
+    setValue("slug", generated, { shouldValidate: false });
+  }, [watchedTitle, dayData, setValue]);
 
   const saveDraft = useCallback(() => {
     const slug = getValues("slug") || getValues("title").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");

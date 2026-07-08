@@ -1,7 +1,7 @@
 import { Elysia } from "elysia";
 import { cors } from "@elysiajs/cors";
 import { paymentsRoutes } from "@/routes/payments";
-import { dailyDropCron } from "@/cron/daily-drop";
+import { dailyDropCron } from "@/email/cron";
 
 const app = new Elysia()
   .use(cors({ origin: process.env.WEB_URL }))

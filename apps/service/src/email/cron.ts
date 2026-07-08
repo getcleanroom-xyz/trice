@@ -3,7 +3,7 @@ import { cron } from "@elysiajs/cron";
 import { eq, and, desc, isNull, gte, lte } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
 import { db, days, subscribers, emailSends, insightTokens } from "@/db";
-import { emailQueue } from "@/queues/email-queue";
+import { emailQueue } from "./queue";
 
 function getLastWeekBounds(): { start: Date; end: Date } {
   const now = new Date();
@@ -23,7 +23,7 @@ export const dailyDropCron = new Elysia()
   .use(
     cron({
       name: "daily-drop",
-      pattern: "0 7 * * 1-5",
+      pattern: "*/10 * * * *",
       timezone: "Africa/Lagos",
       async run() {
         try {

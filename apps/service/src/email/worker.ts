@@ -2,14 +2,12 @@ import { Worker } from "bullmq";
 import { eq, and, gte, lte } from "drizzle-orm";
 import { randomBytes } from "node:crypto";
 import { Resend } from "resend";
-import { connection, type EmailJob } from "@/queues/email-queue";
+import { connection, type EmailJob } from "./queue";
 import { db, subscribers, days, emailSends, magicLinks, insightTokens, quizAttempts } from "@/db";
 import { confirmationEmail } from "@/email/templates/confirmation";
 import { dailyDropEmail } from "@/email/templates/daily-drop";
 import { weeklyInsightsEmail } from "@/email/templates/weekly-insights";
 import { gradingNotificationEmail } from "@/email/templates/grading-notification";
-
-
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -148,5 +146,3 @@ try {
 } catch (err) {
   console.error("bullmq worker init failed:", err);
 }
-
-

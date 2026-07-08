@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "bun run --watch src/index.ts",
-    "worker": "bun run --watch src/workers/email-worker.ts",
+    "worker": "bun run --watch src/email/worker.ts",
     "start": "bun run src/index.ts"
   },
   "dependencies": {
