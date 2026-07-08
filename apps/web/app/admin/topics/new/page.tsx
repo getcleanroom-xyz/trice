@@ -2,6 +2,8 @@ import Link from "next/link";
 import { nextTopicSortOrder } from "@/app/admin/content-actions";
 import { NewTopicForm } from "./form";
 
+export const dynamic = "force-dynamic";
+
 export default async function NewTopicPage() {
   const suggestedSortOrder = await nextTopicSortOrder();
 
