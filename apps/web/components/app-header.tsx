@@ -19,7 +19,7 @@ export function AppHeader({
           <span key={i}>
             <span className="text-muted-foreground"> / </span>
             {cr.href ? (
-              <Link href={cr.href as `/${string}`} className="hover:text-primary">{cr.label}</Link>
+              <Link href={cr.href as never} className="hover:text-primary">{cr.label}</Link>
             ) : (
               <span className="text-muted-foreground">{cr.label}</span>
             )}
