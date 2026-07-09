@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-const SESSION_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
+const SESSION_TTL_MS = 3 * 24 * 60 * 60 * 1000; // 3 days
 const COOKIE_NAME = "trice_admin";
 
 function sign(payload: string): string {
