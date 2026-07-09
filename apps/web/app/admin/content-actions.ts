@@ -264,7 +264,7 @@ export async function deleteDay(formData: FormData) {
 
 export async function listUngradedTasks() {
   const attempts = await db.query.quizAttempts.findMany({
-    where: isNotNull(quizAttempts.taskSubmission),
+    where: and(isNotNull(quizAttempts.taskSubmission), sql`${quizAttempts.taskSubmission} != ''`),
     orderBy: desc(quizAttempts.completedAt),
   });
 
