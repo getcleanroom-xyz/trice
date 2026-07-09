@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { DragHandle } from "@/components/panel-handles";
 import { Markdown } from "@/components/ui/markdown";
 import { MarkdownEditor } from "@/components/ui/markdown-editor";
+import { useToast } from "@/components/ui/toast";
 
 type Question = { id: string; prompt: string; choices: string[] };
 type ResultItem = { prompt: string; choices: string[]; correctIndex: number; chosenIndex: number; correct: boolean };
@@ -35,8 +36,8 @@ export function ClosingPage({
   const [answers, setAnswers] = useState<number[]>([]);
   const [taskSubmission, setTaskSubmission] = useState("");
   const [result, setResult] = useState<{ score: number; total: number; results: ResultItem[]; taskGrade?: string | null } | null>(existingResult ?? null);
-  const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const { toast } = useToast();
 
   const hasTask = !!task;
   const totalSteps = questions.length + (hasTask ? 1 : 0);
@@ -142,7 +143,7 @@ export function ClosingPage({
         const outcome = await submitQuiz(subscriberId, dayId, finalAnswers, taskSub || undefined);
         setResult(outcome);
       } catch {
-        setError("Something went wrong. Please try again.");
+        toast("Submission failed. Please try again.", "error");
       }
     });
   }
@@ -161,9 +162,6 @@ export function ClosingPage({
             />
           ))}
         </div>
-        {error && (
-          <p className="mb-3 text-center text-xs text-red-500">{error}</p>
-        )}
         <p className="mb-2 text-center font-mono text-[10px] tracking-widest text-primary/70 uppercase">
           task
         </p>
@@ -227,9 +225,6 @@ export function ClosingPage({
           />
         ))}
       </div>
-      {error && (
-        <p className="mb-3 text-center text-xs text-red-500">{error}</p>
-      )}
       <p className="mb-1 text-center font-mono text-[10px] text-muted-foreground">
         {step + 1} / {questions.length}
       </p>
