@@ -84,13 +84,26 @@ export default async function HomePage() {
         </section>
       )}
 
-      <footer className="mt-12 sm:mt-16 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-t border-border pt-5">
+      <footer className="mt-12 sm:mt-16 flex flex-col gap-4 border-t border-border pt-5">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+          <p className="font-mono text-[10px] text-muted-foreground">
+            no ads, no tracking, just a letter each morning
+          </p>
+          <Link href="/tip" className="font-mono text-[10px] text-primary">
+            leave a tip →
+          </Link>
+        </div>
         <p className="font-mono text-[10px] text-muted-foreground">
-          no ads, no tracking, just a letter each morning
+          made with care by{" "}
+          <Link href="https://github.com/ovecjoe" target="_blank" className="text-primary hover:underline">Victor Ohachor</Link>
+          {" · "}
+          <Link href="https://linkedin.com/in/victorohachor" target="_blank" className="text-primary hover:underline">LinkedIn</Link>
+          {" · "}
+          <Link href="https://github.com/getcleanroom-xyz/trice" target="_blank" className="text-primary hover:underline">source</Link>
         </p>
-        <Link href="/tip" className="font-mono text-[10px] text-primary">
-          leave a tip →
-        </Link>
+        <p className="text-[11px] italic text-muted-foreground/60">
+          the code is free, the lessons are free, the only thing that costs something is your fifteen minutes.
+        </p>
       </footer>
     </main>
   );
