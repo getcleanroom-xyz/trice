@@ -33,8 +33,10 @@ export default async function HomePage() {
         <em className="text-primary not-italic">spent well.</em>
       </h1>
       <p className="mb-6 sm:mb-7 max-w-md text-sm sm:text-[15px] leading-relaxed text-muted-foreground">
-        One concept a day. Engineering, leadership, and the business sense that makes
-        both worth doing. Ten minutes to learn it, five to prove you did.
+        Every weekday morning, a new lesson shows up in your inbox. Real engineering,
+        real leadership, real business thinking. You watch, you take notes, you answer
+        a quick quiz. Then you move on with your day. No app to open, no feed to
+        scroll, no backlog to feel guilty about.
       </p>
       <SignupForm />
 
@@ -44,7 +46,7 @@ export default async function HomePage() {
             this week&rsquo;s chapter
           </p>
           <h2 className="mb-5 sm:mb-7 font-serif text-xl sm:text-2xl text-foreground">{topic.title}</h2>
-          <div className="flex flex-col sm:flex-row gap-5 sm:gap-7">
+          <div className="flex flex-col sm:flex-row items-start gap-5 sm:gap-7">
             <div className="w-full sm:w-70 shrink-0 -rotate-1 rounded-sm border border-border bg-secondary p-4">
               <StampBadge publishAt={openDay.publishAt} expiresAt={openDay.expiresAt} className="mb-3" />
               <div className="mb-3 aspect-video rounded-sm bg-background overflow-hidden">
@@ -84,7 +86,7 @@ export default async function HomePage() {
 
       <footer className="mt-12 sm:mt-16 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-t border-border pt-5">
         <p className="font-mono text-[10px] text-muted-foreground">
-          no ads, no tracking — just a letter each morning
+          no ads, no tracking, just a letter each morning
         </p>
         <Link href="/tip" className="font-mono text-[10px] text-primary">
           leave a tip →
